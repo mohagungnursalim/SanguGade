@@ -8,6 +8,7 @@ use App\Livewire\Dashboard\Posts;
 use App\Livewire\Dashboard\PostsCreate;
 use App\Livewire\Dashboard\PostsEdit;
 use App\Livewire\Dashboard\RoleIndex;
+use App\Livewire\Dashboard\SaranaPrasarana;
 use App\Livewire\Dashboard\Tags;
 use App\Livewire\Dashboard\UserIndex;
 use Illuminate\Http\Request;
@@ -85,8 +86,11 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
     Route::get('/posts/{slug}/edit', PostsEdit::class)->name('posts.edit');
 
     // ========= Tags & Categories ==========
-    Route::get('/tags', Tags::class)->name('tags');   
+    Route::get('/tags', Tags::class)->name('tags');
     Route::get('/categories', Categories::class)->name('categories');
+
+    // ========= Sarana Prasarana ==========
+    Route::get('/sarana-prasarana', SaranaPrasarana::class)->name('sarana-prasarana');
 
        /**
          * ROLE MANAGEMENT
