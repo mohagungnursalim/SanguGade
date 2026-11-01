@@ -63,7 +63,7 @@
                 type="text"
                 wire:model.live.debounce.400ms="search"
                 placeholder="Cari nama pasar, kecamatan, kelurahan..."
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
+                class="bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400 dark:placeholder-gray-500 text-sm rounded-lg
                        focus:ring-blue-500 focus:border-blue-500
                        block w-full pl-10 pr-4 py-2.5
                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
@@ -126,9 +126,15 @@
                 </thead>
 
                 {{-- ── TBODY ── --}}
-                <tbody>
+                <tbody @click.stop="
+                    const btn = $event.target.closest('.btn-edit-pasar');
+                    if (btn) {
+                        const pasarData = JSON.parse(btn.dataset.pasar);
+                        openEditModal(pasarData);
+                    }
+                ">
                     @forelse ($pasars as $index => $pasar)
-                    <tr class="bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition border-b border-gray-200 dark:border-gray-700">
+                    <tr wire:key="pasar-row{{ $pasar->id }}" class="bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition border-b border-gray-200 dark:border-gray-700">
 
                         {{-- No --}}
                         <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
@@ -146,7 +152,9 @@
                                 <img
                                     src="{{ asset('storage/' . $pasar->image) }}"
                                     alt="{{ $pasar->nama_pasar }}"
-                                    class="w-12 h-12 object-cover rounded border border-gray-600 dark:border-gray-600 mx-auto"
+                                    @click="$dispatch('open-image-modal', { src: '{{ asset('storage/' . $pasar->image) }}', title: '{{ $pasar->nama_pasar }}' })"
+                                    class="w-12 h-12 object-cover rounded border border-gray-600 dark:border-gray-600 mx-auto cursor-pointer hover:opacity-80 transition duration-150 shadow-sm"
+                                    title="Klik untuk memperbesar"
                                 />
                             @else
                                 <div class="w-12 h-12 flex items-center justify-center rounded bg-gray-100 dark:bg-gray-700 border border-gray-600 dark:border-gray-600 mx-auto">
@@ -228,15 +236,25 @@
                         {{-- Aksi --}}
                         <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
                             <div class="flex items-center justify-center gap-1">
-                                {{-- Edit (murni Alpine, tanpa request server) --}}
-                                <button
+                                
+                                {{-- Tombol Edit yang sudah DIPERBAIKI (Gunakan kutip tunggal dan @json) --}}
+                                {{-- <button
                                     type="button"
-                                    @click="openEditModal({{ $pasar->toJson() }})"
-                                    class="inline-flex items-center justify-center w-7 h-7 rounded
-                                           bg-amber-400 hover:bg-amber-500 text-white transition"
+                                    @click='openEditModal(@json($pasar))'
+                                    class="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-400 hover:bg-amber-500 text-white transition"
                                     title="Edit"
                                 >
                                     <i class="fas fa-edit text-xs"></i>
+                                </button> --}}
+
+                                {{-- Tombol Edit menggunakan class 'btn-edit-pasar' dan dataset JSON --}}
+                                <button
+                                    type="button"
+                                    data-pasar="{{ json_encode($pasar) }}"
+                                    class="btn-edit-pasar inline-flex items-center justify-center w-7 h-7 rounded bg-amber-400 hover:bg-amber-500 text-white transition cursor-pointer"
+                                    title="Edit"
+                                >
+                                    <i class="fas fa-edit text-xs pointer-events-none"></i>
                                 </button>
 
                                 {{-- Hapus --}}
@@ -256,7 +274,7 @@
 
                     </tr>
                     @empty
-                    <tr>
+                    <tr wire:key="pasar-empty">
                         <td colspan="22" class="px-6 py-16 text-center border border-gray-200 dark:border-gray-700">
                             <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
                                 <i class="fas fa-store-slash text-4xl"></i>
@@ -441,12 +459,12 @@
             <div x-show="mode === 'create'">
                 <form
                     wire:submit.prevent="store"
-                    x-data="{ progress: 0 }"
-                    x-on:livewire-upload-start="progress = 0"
+                    x-data="{ progress: 0, isUploading: false }"
+                    x-on:livewire-upload-start="isUploading = true; progress = 0"
                     x-on:livewire-upload-progress="progress = $event.detail.progress"
-                    x-on:livewire-upload-finish="progress = 0"
-                    class="px-6 py-5 space-y-6"
-                >
+                    x-on:livewire-upload-finish="isUploading = false; progress = 0"
+                    x-on:livewire-upload-error="isUploading = false; progress = 0"
+                    class="px-6 py-5 space-y-6">
 
                     {{-- 1. Informasi Umum --}}
                     <fieldset>
@@ -478,29 +496,60 @@
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Foto Pasar</label>
 
-                                {{-- Dropzone --}}
+                               {{-- Dropzone Create --}}
                                 <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-blue-400 transition">
                                     <input
-                                        wire:model="image"
                                         type="file"
                                         accept="image/*"
                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        x-on:change="
+                                            const file = $event.target.files[0];
+                                            if (!file) return;
+
+                                            if (file.size > 2 * 1024 * 1024) { 
+                                                $event.target.value = null; 
+                                                $dispatch('notify', { type: 'error', message: 'Gagal unggah: Ukuran tidak boleh melebihi 2MB!' });
+                                                return; 
+                                            }
+
+                                            // Aktifkan state loading manual
+                                            isUploading = true;
+                                            progress = 0;
+
+                                            // Eksekusi upload Livewire dengan menangkap callback progress & finish
+                                            $wire.upload('image', file, (uploadedFilename) => {
+                                                // Selesai upload sukses
+                                                isUploading = false;
+                                            }, (error) => {
+                                                // Jika error
+                                                isUploading = false;
+                                                progress = 0;
+                                                $dispatch('notify', { type: 'error', message: 'Gagal mengunggah gambar!' });
+                                            }, (event) => {
+                                                // Menangkap angka persentase progres secara real-time!
+                                                progress = event.detail.progress;
+                                            });
+                                        "
                                     />
-                                    <div wire:loading.remove wire:target="image">
+                                    
+                                    {{-- Tampil jika TIDAK sedang upload --}}
+                                    <div x-show="!isUploading">
                                         <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 dark:text-gray-500 mb-1"></i>
                                         <p class="text-xs text-gray-400 dark:text-gray-500">Klik atau seret gambar ke sini</p>
                                         <p class="text-xs text-gray-300 dark:text-gray-600">JPG, PNG, WEBP — maks. 2MB</p>
                                     </div>
-                                    <div wire:loading wire:target="image" class="flex items-center justify-center gap-2 text-blue-500 text-sm">
-                                        <i class="fas fa-spinner fa-spin"></i> Mengunggah...
+                                    
+                                    {{-- Tampil HANYA jika file sedang di-upload secara nyata --}}
+                                    <div x-show="isUploading" x-cloak class="flex items-center justify-center gap-2 text-blue-500 text-sm py-3">
+                                        <i class="fas fa-spinner fa-spin"></i> Mengunggah... <span x-text="progress"></span>%
                                     </div>
                                 </div>
 
-                                {{-- Progress --}}
-                                <div x-show="progress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full transition-all"
-                                         :class="progress < 100 ? 'bg-blue-500' : 'bg-green-500'"
-                                         :style="'width:' + progress + '%'"></div>
+                                {{-- Progress Bar --}}
+                                <div x-show="isUploading && progress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div class="h-1.5 rounded-full transition-all duration-75"
+                                        :class="progress < 100 ? 'bg-blue-500' : 'bg-green-500'"
+                                        :style="'width:' + progress + '%'"></div>
                                 </div>
 
                                 {{-- Preview --}}
@@ -529,7 +578,7 @@
                                     min="1900"
                                     max="{{ date('Y') }}"
                                     placeholder="cth. 2005"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 placeholder:text-gray-400 rounded-lg
                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
@@ -547,7 +596,7 @@
                                     step="0.01"
                                     min="0"
                                     placeholder="cth. 1500.50"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 placeholder:text-gray-400 rounded-lg
                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
@@ -587,7 +636,7 @@
                                     wire:model.defer="kecamatan"
                                     type="text"
                                     placeholder="Kecamatan..."
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 placeholder:text-gray-400 rounded-lg
                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
@@ -604,7 +653,7 @@
                                     wire:model.defer="kelurahan"
                                     type="text"
                                     placeholder="Kelurahan..."
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 placeholder:text-gray-400 rounded-lg
                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
@@ -620,9 +669,8 @@
                                 <select
                                     wire:model.defer="status_pasar"
                                     class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-                                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="harian">Harian</option>
                                     <option value="mingguan">Mingguan</option>
                                 </select>
@@ -732,7 +780,7 @@
                     </fieldset>
 
                     {{-- Footer Form Create --}}
-                    <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
                         <button type="button" @click="closeModal()"
                                 class="px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition">
                             Batal
@@ -760,12 +808,12 @@
             <div x-show="mode === 'edit'">
                 <form
                     wire:submit.prevent="update"
-                    x-data="{ progress: 0 }"
-                    x-on:livewire-upload-start="progress = 0"
+                    x-data="{ progress: 0, isUploading: false, tempEditPreview: null }"
+                    x-on:livewire-upload-start="isUploading = true; progress = 0"
                     x-on:livewire-upload-progress="progress = $event.detail.progress"
-                    x-on:livewire-upload-finish="progress = 0"
-                    class="px-6 py-5 space-y-6"
-                >
+                    x-on:livewire-upload-finish="isUploading = false; progress = 0"
+                    x-on:livewire-upload-error="isUploading = false; progress = 0"
+                    class="px-6 py-5 space-y-6">
 
                     {{-- 1. Informasi Umum --}}
                     <fieldset>
@@ -805,28 +853,55 @@
                                 </div>
                                 @endif
 
-                                {{-- Dropzone Edit --}}
+                               {{-- Dropzone Edit --}}
                                 <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-amber-400 transition">
                                     <input
-                                        wire:model="editImage"
                                         type="file"
                                         accept="image/*"
                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        x-on:change="
+                                            const file = $event.target.files[0];
+                                            if (!file) return;
+
+                                            if (file.size > 2 * 1024 * 1024) { 
+                                                $event.target.value = null; 
+                                                $dispatch('notify', { type: 'error', message: 'Batal unggah: Ukuran melebihi 2MB!' });
+                                                return; 
+                                            }
+
+                                            isUploading = true;
+                                            progress = 0;
+
+                                            $wire.upload('editImage', file, (uploadedFilename) => {
+                                                isUploading = false;
+                                            }, (error) => {
+                                                isUploading = false;
+                                                progress = 0;
+                                                $dispatch('notify', { type: 'error', message: 'Gagal mengunggah gambar!' });
+                                            }, (event) => {
+                                                progress = event.detail.progress;
+                                            });
+                                        "
                                     />
-                                    <div wire:loading.remove wire:target="editImage">
+                                    
+                                    {{-- Tampil jika TIDAK sedang upload --}}
+                                    <div x-show="!isUploading">
                                         <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 dark:text-gray-500 mb-1"></i>
                                         <p class="text-xs text-gray-400 dark:text-gray-500">Klik untuk mengganti foto</p>
+                                        <p class="text-xs text-gray-300 dark:text-gray-600">JPG, PNG, WEBP — maks. 2MB</p>
                                     </div>
-                                    <div wire:loading wire:target="editImage" class="flex items-center justify-center gap-2 text-amber-500 text-sm">
-                                        <i class="fas fa-spinner fa-spin"></i> Mengunggah...
+                                    
+                                    {{-- Tampil HANYA jika file sedang diupload --}}
+                                    <div x-show="isUploading" x-cloak class="flex items-center justify-center gap-2 text-amber-500 text-sm py-1">
+                                        <i class="fas fa-spinner fa-spin"></i> Mengunggah... <span x-text="progress"></span>%
                                     </div>
                                 </div>
 
-                                {{-- Progress Edit --}}
-                                <div x-show="progress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full transition-all"
-                                         :class="progress < 100 ? 'bg-amber-500' : 'bg-green-500'"
-                                         :style="'width:' + progress + '%'"></div>
+                                {{-- Progress Bar Edit --}}
+                                <div x-show="isUploading &&progress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div class="h-1.5 rounded-full transition-all duration-75"
+                                        :class="progress < 100 ? 'bg-amber-500' : 'bg-green-500'"
+                                        :style="'width:' + progress + '%'"></div>
                                 </div>
 
                                 {{-- Preview foto baru --}}
@@ -855,7 +930,7 @@
                                     min="1900"
                                     max="{{ date('Y') }}"
                                     placeholder="cth. 2005"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 placeholder:text-gray-400 rounded-lg
                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
@@ -1055,7 +1130,7 @@
                     </fieldset>
 
                     {{-- Footer Form Edit --}}
-                    <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
                         <button type="button" @click="closeModal()"
                                 class="px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition">
                             Batal
@@ -1064,8 +1139,7 @@
                             type="submit"
                             wire:loading.attr="disabled"
                             wire:target="update,editImage"
-                            class="px-6 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed min-w-[100px]"
-                        >
+                            class="px-6 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed min-w-[100px]">
                             <span wire:loading.remove wire:target="update">
                                 <i class="fas fa-save mr-1"></i> Perbarui
                             </span>
@@ -1086,8 +1160,7 @@
          MODAL KONFIRMASI HAPUS
     ====================================================================== --}}
     <div
-        x-data="{ showDeleteModal: @entangle('showDeleteModal') }"
-    >
+        x-data="{ showDeleteModal: @entangle('showDeleteModal') }">
         <div
             x-show="showDeleteModal"
             x-transition:enter="transition ease-out duration-300"
@@ -1097,8 +1170,7 @@
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
             x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
-        >
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
             <div
                 @click.outside="showDeleteModal = false"
                 x-transition:enter="transition ease-out duration-300"
@@ -1107,8 +1179,7 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95"
-                class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6"
-            >
+                class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
                 <div class="flex flex-col items-center text-center gap-4">
                     <div class="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                         <i class="fas fa-trash-alt text-red-500 text-xl"></i>
@@ -1130,8 +1201,7 @@
                             wire:click="delete"
                             wire:target="delete"
                             wire:loading.attr="disabled"
-                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed">
                             <span wire:loading.remove wire:target="delete">
                                 <i class="fas fa-trash mr-1"></i> Hapus
                             </span>
@@ -1141,6 +1211,57 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+
+    {{-- =====================================================================
+         MODAL PREVIEW FOTO MENYELURUH (STANDALONE)
+    ====================================================================== --}}
+    <div
+        x-data="{
+            imageModalOpen: false,
+            imgSrc: '',
+            imgTitle: ''
+        }"
+        @open-image-modal.window="
+            imgSrc = $event.detail.src;
+            imgTitle = $event.detail.title;
+            imageModalOpen = true;
+        "
+        x-show="imageModalOpen"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @keydown.escape.window="imageModalOpen = false"
+        x-cloak
+        class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+        {{-- Backdrop --}}
+        <div class="fixed inset-0" @click="imageModalOpen = false"></div>
+
+        {{-- Box Modal --}}
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full z-10 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-image text-blue-500"></i>
+                    <span x-text="imgTitle"></span>
+                </h3>
+                <button type="button" @click="imageModalOpen = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition focus:outline-none">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <div class="p-4 flex items-center justify-center bg-gray-900/5 dark:bg-gray-900/40">
+                <img :src="imgSrc" :alt="imgTitle" class="max-h-[75vh] w-auto object-contain rounded-lg shadow-md border border-gray-200 dark:border-gray-700" />
+            </div>
+            <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs">
+                <span class="text-gray-500 dark:text-gray-400">Tekan <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px]">ESC</kbd> untuk menutup</span>
+                <a :href="imgSrc" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                    <i class="fas fa-external-link-alt text-[10px]"></i> Buka Tab Baru
+                </a>
             </div>
         </div>
     </div>
@@ -1176,7 +1297,7 @@ function pasarManager() {
         // ─── Buka modal edit (data sudah ada di frontend via toJson()) ────
         openEditModal(pasar) {
             this.mode = 'edit';
-
+            this.tempEditPreview = null;
             /**
              * Sinkronisasi nilai ke Livewire properties menggunakan $wire.set
              * agar form edit terisi tanpa round-trip tambahan ke server.
@@ -1240,4 +1361,3 @@ function pasarManager() {
 }
 </script>
 @endpush
-
