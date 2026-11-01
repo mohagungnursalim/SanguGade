@@ -504,8 +504,8 @@
             class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
         >
             {{-- Modal Header: Mirip Kop Formulir SSRD --}}
-            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r"
-                 :class="mode === 'create' ? 'from-emerald-700 to-teal-800 text-white' : 'from-amber-600 to-amber-700 text-white'">
+            <div class="flex items-center justify-between px-6 py-4"
+                 :class="mode === 'create' ? 'bg-teal-800 text-white' : 'bg-amber-600 text-white'">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
                         <i class="fas" :class="mode === 'create' ? 'fa-file-circle-plus' : 'fa-file-pen'"></i>
@@ -769,7 +769,7 @@
                     </div>
 
                     {{-- Footer Form Create --}}
-                    <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <button type="button" @click="closeModal()" class="px-5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition">
                             Batal
                         </button>
