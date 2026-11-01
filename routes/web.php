@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\CkeditorController;
 use App\Livewire\Dashboard\Categories;
 use App\Livewire\Dashboard\PermissionIndex;
+use App\Livewire\Dashboard\PendapatanPasarIndex;
 use App\Livewire\Dashboard\Posts;
 use App\Livewire\Dashboard\PostsCreate;
 use App\Livewire\Dashboard\PostsEdit;
@@ -89,8 +90,9 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
     Route::get('/tags', Tags::class)->name('tags');
     Route::get('/categories', Categories::class)->name('categories');
 
-    // ========= Sarana Prasarana ==========
+    // ========= Sarana Prasarana & Pendapatan Pasar ==========
     Route::get('/sarana-prasarana', SaranaPrasarana::class)->name('sarana-prasarana');
+    Route::get('/pendapatan-pasar', PendapatanPasarIndex::class)->name('pendapatan-pasar');
 
        /**
          * ROLE MANAGEMENT

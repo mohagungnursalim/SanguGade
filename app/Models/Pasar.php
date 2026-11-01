@@ -50,5 +50,13 @@ class Pasar extends Model
         'retribusi'          => 'integer',
         'ptt'                => 'integer',
     ];
+
+    /**
+     * Relasi ke data pendapatan pasar (SSRD)
+     */
+    public function pendapatanPasars()
+    {
+        return $this->hasMany(PendapatanPasar::class, 'pasar_id');
+    }
 }
 

@@ -40,7 +40,7 @@
                   </button>
 
                  <ul id="dropdown-pasar"
-                     class="text-sm {{ request()->routeIs('dashboard.sarana-prasarana') ? '' : 'hidden' }} py-2 space-y-2">
+                     class="text-sm {{ request()->routeIs(['dashboard.sarana-prasarana', 'dashboard.pendapatan-pasar']) ? '' : 'hidden' }} py-2 space-y-2">
                      <li>
                          <a wire:navigate href="{{ route('dashboard.sarana-prasarana') }}"
                              class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
@@ -52,10 +52,11 @@
                          </a>
                      </li>
                      <li>
-                         <a wire:navigate href=""
+                         <a wire:navigate href="{{ route('dashboard.pendapatan-pasar') }}"
                              class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
                             text-gray-900 dark:text-white
-                            hover:bg-gray-100 dark:hover:bg-gray-700">
+                            hover:bg-gray-100 dark:hover:bg-gray-700
+                            {{ request()->routeIs('dashboard.pendapatan-pasar') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
                              <i class="fa-solid fa-arrow-right"></i>
                              <span class="ml-2">Pendapatan Pasar</span>
                          </a>
