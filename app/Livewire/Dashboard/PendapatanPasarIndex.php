@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Helpers\PasarsCacheHelper;
+use App\Helpers\PendapatanCacheHelper;
 use App\Helpers\TerbilangHelper;
 use App\Models\Pasar;
 use App\Models\PendapatanPasar;
@@ -15,22 +17,22 @@ class PendapatanPasarIndex extends Component
     use WithPagination;
 
     // ─── Filter & Search ──────────────────────────────────────────────────
-    #[Url()]
+    
     public string $search = '';
 
-    #[Url()]
+    
     public ?string $filterPasar = null;
 
-    #[Url()]
+    
     public ?string $filterTahun = null;
 
-    #[Url()]
+    
     public ?string $filterStartDate = null;
 
-    #[Url()]
+    
     public ?string $filterEndDate = null;
 
-    #[Url()]
+    
     public ?string $filterJenis = null;
 
     public int $perPage = 10;
@@ -196,6 +198,7 @@ class PendapatanPasarIndex extends Component
         });
 
         $this->resetCreateForm();
+        PendapatanCacheHelper::refreshAll();
         $this->dispatch('ssrd-saved');
         $this->dispatch('notify', type: 'success', message: 'Data SSRD Pendapatan Pasar berhasil disimpan!');
     }
@@ -228,6 +231,7 @@ class PendapatanPasarIndex extends Component
         });
 
         $this->resetEditForm();
+        PendapatanCacheHelper::refreshAll();
         $this->dispatch('ssrd-updated');
         $this->dispatch('notify', type: 'success', message: 'Data SSRD Pendapatan Pasar berhasil diperbarui!');
     }
@@ -249,6 +253,7 @@ class PendapatanPasarIndex extends Component
             });
 
             $this->reset(['deleteId', 'deleteInfo', 'showDeleteModal']);
+            PendapatanCacheHelper::refreshAll();
             $this->dispatch('notify', type: 'success', message: 'Data SSRD berhasil dihapus!');
         }
     }
@@ -328,18 +333,24 @@ class PendapatanPasarIndex extends Component
         $totalNominalFiltered = (float) $aggregateFiltered->sum('jumlah_retribusi');
         $totalTransaksiFiltered = (int) $aggregateFiltered->count();
 
-        // Total All-Time Global
-        $totalNominalAll = (float) PendapatanPasar::sum('jumlah_retribusi');
-        $totalTransaksiAll = (int) PendapatanPasar::count();
+        // Total All-Time Global dari Cache
+        $totalNominalAll = PendapatanCacheHelper::getTotalNominalAll();
+        $totalTransaksiAll = PendapatanCacheHelper::getTotalTransaksiAll();
 
-        // Data List Pasars untuk dropdown
-        $pasars = Pasar::orderBy('nama_pasar')->get(['id', 'nama_pasar', 'kecamatan']);
+        // Data List Pasars untuk dropdown dari Cache Global Pasar
+        $pasars = PasarsCacheHelper::getAllPasar();
 
-        // Data Ringkasan Per Pasar (Top 10 / all)
-        $ringkasanPerPasar = Pasar::withCount('pendapatanPasars')
-            ->withSum('pendapatanPasars', 'jumlah_retribusi')
-            ->orderByDesc('pendapatan_pasars_sum_jumlah_retribusi')
-            ->get();
+        // Dapatkan Nama Pasar yang difilter (jika ada)
+        $namaPasarTerpilih = null;
+        if ($this->filterPasar) {
+            $pasarTerpilih = $pasars->firstWhere('id', $this->filterPasar);
+            if ($pasarTerpilih) {
+                $namaPasarTerpilih = $pasarTerpilih->nama_pasar;
+            }
+        }
+
+        // Data Ringkasan Per Pasar dari Cache Global Pendapatan
+        $ringkasanPerPasar = PendapatanCacheHelper::getRingkasanPerPasar();
 
         // Detail Pasar jika dipilih modal detail
         $detailPasar = null;
@@ -358,21 +369,13 @@ class PendapatanPasarIndex extends Component
             }
         }
 
-        // List Tahun yang tersedia di data
-        $tahunList = PendapatanPasar::selectRaw('DISTINCT tahun_retribusi AS th')
-            ->orderByDesc('th')
-            ->pluck('th')
-            ->filter()
-            ->values()
-            ->all();
-
-        if (empty($tahunList)) {
-            $tahunList = [(int)date('Y'), (int)date('Y') - 1];
-        }
+        // List Tahun dari Cache
+        $tahunList = PendapatanCacheHelper::getTahunList();
 
         return view('livewire.dashboard.pendapatan-pasar-index', [
             'ssrdList'              => $ssrdList,
             'pasars'                => $pasars,
+            'namaPasarTerpilih'     => $namaPasarTerpilih,
             'totalNominalFiltered'  => $totalNominalFiltered,
             'totalTransaksiFiltered'=> $totalTransaksiFiltered,
             'totalNominalAll'       => $totalNominalAll,

@@ -1,5 +1,5 @@
 <div
-    class="p-6 text-gray-900 dark:text-gray-100"
+    class="px-5 py-5 md:px-7 text-gray-900 dark:text-gray-100"
     x-data="ssrdManager()"
     x-init="init()"
     @ssrd-saved.window="closeModal()"
@@ -29,51 +29,39 @@
     {{-- =====================================================================
          HEADER HALAMAN & STATISTIK KARTU
     ====================================================================== --}}
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
         <div>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center justify-center p-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-lg">
-                    <i class="fa-solid fa-file-invoice-dollar text-xl"></i>
-                </span>
-                <div>
-                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Pendapatan Pasar (SSRD)</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Surat Setoran Retribusi Daerah — Monitoring dan Pencatatan Pembayaran Retribusi Pasar
-                    </p>
-                </div>
-            </div>
+            <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Pendapatan Pasar</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Surat Setoran Retribusi Daerah (SSRD) - Monitoring dan Pencatatan Pembayaran Retribusi Pasar.</p>
         </div>
 
         <div class="flex items-center gap-2">
             <button
                 type="button"
                 @click="tab = tab === 'ringkasan' ? 'transaksi' : 'ringkasan'"
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg shadow-sm transition"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border-b border-transparent hover:border-gray-400 text-gray-600 dark:text-gray-300 transition"
             >
-                <i class="fas" :class="tab === 'ringkasan' ? 'fa-list' : 'fa-chart-pie'"></i>
-                <span x-text="tab === 'ringkasan' ? 'Lihat Tabel SSRD' : 'Ringkasan Per Pasar'"></span>
+                <i class="fas text-xs" :class="tab === 'ringkasan' ? 'fa-list' : 'fa-chart-pie'"></i>
+                <span x-text="tab === 'ringkasan' ? 'Lihat tabel' : 'Ringkasan pasar'"></span>
             </button>
 
             <button
                 type="button"
                 @click="openCreateModal()"
-                class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow transition"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition"
             >
-                <i class="fas fa-plus"></i>
+                <i class="fas fa-plus text-xs"></i>
                 Tambah SSRD
             </button>
         </div>
-    </div>
+    </header>
 
     {{-- ─── 4 KARTU STATISTIK ─────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-200 dark:divide-gray-700 mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
         {{-- Total Pendapatan Seluruhnya --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-vault"></i>
-            </div>
+        <div class="px-4 py-2 first:pl-0">
             <div>
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Akumulasi</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Total Akumulasi (Semua Pasar)</span>
                 <p class="text-lg font-bold text-gray-900 dark:text-white">
                     Rp {{ number_format($totalNominalAll, 0, ',', '.') }}
                 </p>
@@ -82,12 +70,13 @@
         </div>
 
         {{-- Total Hasil Filter --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-filter-circle-dollar"></i>
-            </div>
+        <div class="px-4 py-2">
             <div>
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Hasil Filter Terpilih</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Hasil Filter Terpilih @if($namaPasarTerpilih)
+                - {{ $namaPasarTerpilih }}</span>
+            @else
+                (Semua Pasar)
+            @endif
                 <p class="text-lg font-bold text-blue-600 dark:text-blue-400">
                     Rp {{ number_format($totalNominalFiltered, 0, ',', '.') }}
                 </p>
@@ -96,12 +85,9 @@
         </div>
 
         {{-- Pasar Terdaftar --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-shop"></i>
-            </div>
+        <div class="px-4 py-2">
             <div>
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Pasar</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Total Pasar</span>
                 <p class="text-lg font-bold text-gray-900 dark:text-white">
                     {{ $pasars->count() }} Pasar
                 </p>
@@ -110,13 +96,10 @@
         </div>
 
         {{-- Rata-rata per Setoran --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-receipt"></i>
-            </div>
+        <div class="px-4 py-2">
             <div>
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Rata-rata Setoran</span>
-                <p class="text-lg font-bold text-gray-900 dark:text-white">
+                <span class="text-xs text-gray-500 dark:text-gray-400">Rata-rata Setoran</span>
+                <p class="text-lg font-bold text-green-600 dark:text-white">
                     Rp {{ $totalTransaksiFiltered > 0 ? number_format($totalNominalFiltered / $totalTransaksiFiltered, 0, ',', '.') : '0' }}
                 </p>
                 <span class="text-[11px] text-gray-400">Pada filter aktif</span>
@@ -153,7 +136,7 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($ringkasanPerPasar as $idx => $item)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition">
                             <td class="px-3 py-2.5">{{ $idx + 1 }}</td>
                             <td class="px-3 py-2.5 font-medium text-gray-900 dark:text-white">
                                 {{ $item->nama_pasar }}
@@ -292,9 +275,8 @@
                 @if ($search || $filterPasar || $filterTahun || $filterStartDate || $filterEndDate || $filterJenis)
                     <button
                         type="button"
-                        wire:click="resetFilters"
-                        class="inline-flex items-center gap-1 px-3 py-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium transition"
-                    >
+                        wire:click="resetFilters" wire:loading.remove wire:target="search, filterPasar, filterTahun, filterStartDate, filterEndDate, filterJenis" wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-1 px-3 py-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium transition">
                         <i class="fas fa-rotate-left"></i> Reset Filter
                     </button>
                 @endif
@@ -327,7 +309,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse ($ssrdList as $index => $item)
-                        <tr class="hover:bg-emerald-50/40 dark:hover:bg-gray-750 transition">
+                        <tr class="hover:bg-emerald-50/40 dark:hover:bg-gray-900 transition">
                             {{-- No --}}
                             <td class="px-3 py-3 text-center text-gray-400 font-mono">
                                 {{ $ssrdList->firstItem() + $index }}
@@ -494,15 +476,13 @@
         class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8 px-4"
     >
         <div
-            @click.outside="closeModal()"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-        >
+            class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {{-- Modal Header: Mirip Kop Formulir SSRD --}}
             <div class="flex items-center justify-between px-6 py-4"
                  :class="mode === 'create' ? 'bg-teal-800 text-white' : 'bg-amber-600 text-white'">
@@ -512,9 +492,9 @@
                     </div>
                     <div>
                         <h2 class="text-base font-bold tracking-tight"
-                            x-text="mode === 'create' ? 'SURAT SETORAN RETRIBUSI DAERAH (SSRD) — BARU' : 'EDIT FORMULIR SSRD'">
+                            x-text="mode === 'create' ? 'SURAT SETORAN RETRIBUSI DAERAH (SSRD) - Buat Baru' : 'EDIT FORMULIR SSRD'">
                         </h2>
-                        <p class="text-xs text-white/80">Sistem Monitoring Pendapatan Pasar Sangu Gade</p>
+                        <p class="text-xs text-white/80">Monitoring Pendapatan Pasar</p>
                     </div>
                 </div>
                 <button type="button" @click="closeModal()" class="text-white/80 hover:text-white transition text-lg">
@@ -526,7 +506,7 @@
             <div x-show="mode === 'create'">
                 <form wire:submit.prevent="store" class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-store"></i> 1. Pasar & Identitas Rekening
                         </h3>
@@ -595,7 +575,7 @@
                     </div>
 
                     {{-- 2. MASA & JENIS RETRIBUSI --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-calendar-check"></i> 2. Masa, Tahun & Jenis Retribusi
                         </h3>
@@ -705,7 +685,7 @@
                     </div>
 
                     {{-- 4. INFORMASI PENYETOR & BANK --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-hand-holding-dollar"></i> 4. Informasi Penyetoran & Pengesahan
                         </h3>
@@ -794,7 +774,7 @@
             <div x-show="mode === 'edit'">
                 <form wire:submit.prevent="update" class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR (EDIT) --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-store"></i> 1. Pasar & Identitas Rekening
                         </h3>
@@ -857,7 +837,7 @@
                     </div>
 
                     {{-- 2. MASA & JENIS RETRIBUSI (EDIT) --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-calendar-check"></i> 2. Masa, Tahun & Jenis Retribusi
                         </h3>
@@ -960,7 +940,7 @@
                     </div>
 
                     {{-- 4. INFORMASI PENYETOR & BANK (EDIT) --}}
-                    <div class="bg-gray-50 dark:bg-gray-750 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-hand-holding-dollar"></i> 4. Informasi Penyetoran & Pengesahan
                         </h3>
@@ -1017,7 +997,7 @@
                     </div>
 
                     {{-- Footer Form Edit --}}
-                    <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <button type="button" @click="closeModal()" class="px-5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition">
                             Batal
                         </button>
@@ -1055,14 +1035,12 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     >
         <div
-            @click.outside="detailItem = null"
-            class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-        >
+            class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {{-- Header SSRD Receipt --}}
-            <div class="bg-gray-900 text-white p-5 border-b border-gray-700 flex items-center justify-between">
+            <div class="bg-white dark:bg-gray-800 text-white p-5 border-b border-gray-700 flex items-center justify-between">
                 <div>
                     <span class="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-semibold">Salinan Tanda Bukti Penyetoran</span>
-                    <h3 class="text-base font-bold">SURAT SETORAN RETRIBUSI DAERAH (SSRD)</h3>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">SURAT SETORAN RETRIBUSI DAERAH (SSRD)</h3>
                 </div>
                 <button type="button" @click="detailItem = null" class="text-gray-400 hover:text-white transition">
                     <i class="fas fa-times text-lg"></i>
@@ -1121,11 +1099,11 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 pt-2">
-                        <div class="p-3 bg-gray-50 dark:bg-gray-750 rounded-lg">
+                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
                             <span class="text-gray-400 text-[10px] block uppercase font-bold">Penyetor:</span>
                             <span class="font-semibold text-gray-900 dark:text-white" x-text="detailItem.nama_penyetor"></span>
                         </div>
-                        <div class="p-3 bg-gray-50 dark:bg-gray-750 rounded-lg">
+                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
                             <span class="text-gray-400 text-[10px] block uppercase font-bold">Petugas / Teller Bank:</span>
                             <span class="font-semibold text-gray-900 dark:text-white" x-text="detailItem.petugas_bank || '-'"></span>
                         </div>
@@ -1139,7 +1117,7 @@
                 </div>
             </template>
 
-            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-750 flex justify-end">
+            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 flex justify-center">
                 <button type="button" @click="detailItem = null" class="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 rounded-lg transition">
                     Tutup
                 </button>
@@ -1152,11 +1130,10 @@
     ====================================================================== --}}
     @if ($showDetailModal && $detailPasar)
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
-    >
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
         <div class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden my-6">
             {{-- Header --}}
-            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-5 flex items-center justify-between">
+            <div class="bg-teal-900 text-white p-5 flex items-center justify-between">
                 <div>
                     <span class="text-xs text-emerald-300 font-medium">Rekapitulasi Riwayat Setoran Retribusi Pasar</span>
                     <h2 class="text-lg font-bold">{{ $detailPasar->nama_pasar }}</h2>
@@ -1202,7 +1179,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             @forelse ($detailRiwayat as $item)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition">
                                     <td class="px-3 py-2 whitespace-nowrap">{{ $item->tanggal_penyetoran ? $item->tanggal_penyetoran->format('d/m/Y') : '-' }}</td>
                                     <td class="px-3 py-2 font-mono font-medium">{{ $item->nomor_urut_ssrd ?: '-' }}</td>
                                     <td class="px-3 py-2">
@@ -1226,7 +1203,7 @@
                 </div>
             </div>
 
-            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-750 flex justify-end">
+            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 flex justify-center">
                 <button type="button" wire:click="closePasarDetail" class="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 rounded-lg transition">
                     Tutup
                 </button>
@@ -1251,7 +1228,6 @@
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
         >
             <div
-                @click.outside="showDeleteModal = false"
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100"

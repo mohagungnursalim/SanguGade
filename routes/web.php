@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\CkeditorController;
 use App\Livewire\Dashboard\Categories;
+use App\Livewire\Dashboard\Dashboard;
 use App\Livewire\Dashboard\PermissionIndex;
 use App\Livewire\Dashboard\PendapatanPasarIndex;
 use App\Livewire\Dashboard\Posts;
@@ -33,7 +34,7 @@ Route::post('/logout', function () {
 
 
 // =========== Dashboard Page ==========
-Route::view('dashboard', 'livewire.dashboard.dashboard')
+Route::get('dashboard', Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 

@@ -290,16 +290,16 @@
                 @if ($pasars->isNotEmpty())
                 <tfoot>
                     <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200 font-semibold text-xs">
-                        <td colspan="4" class="border border-gray-600 px-3 py-2 text-center font-bold tracking-wide uppercase">
+                        <td colspan="5" class="border border-gray-600 px-3 py-2 text-center font-bold tracking-wide uppercase">
                             Total
                         </td>
 
                         {{-- Total Luas --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
+                        {{-- <td class="border border-gray-600 px-2 py-2 text-center">
                             <span class="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                                 {{ number_format($totals->total_luas ?? 0) }} m²
                             </span>
-                        </td>
+                        </td> --}}
 
                         {{-- Sertifikat Ada --}}
                         <td class="border border-gray-600 px-2 py-2 text-center">

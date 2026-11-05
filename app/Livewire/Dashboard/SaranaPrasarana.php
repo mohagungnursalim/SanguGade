@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Helpers\PasarsCacheHelper;
 use App\Models\Pasar;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Url;
@@ -223,6 +224,7 @@ class SaranaPrasarana extends Component
         ]);
 
         $this->resetCreateForm();
+        PasarsCacheHelper::refreshAll();
         $this->dispatch('pasar-saved');
         $this->dispatch('notify', type: 'success', message: 'Data pasar berhasil ditambahkan!');
     }
@@ -270,6 +272,7 @@ class SaranaPrasarana extends Component
         ]);
 
         $this->resetEditForm();
+        PasarsCacheHelper::refreshAll();
         $this->dispatch('pasar-updated');
         $this->dispatch('notify', type: 'success', message: 'Data pasar berhasil diperbarui!');
     }
@@ -294,6 +297,7 @@ class SaranaPrasarana extends Component
 
         $pasar->delete();
 
+        PasarsCacheHelper::refreshAll();
         $this->reset(['deleteId', 'deleteName', 'showDeleteModal']);
         $this->dispatch('notify', type: 'success', message: 'Data pasar berhasil dihapus!');
     }
@@ -338,29 +342,13 @@ class SaranaPrasarana extends Component
             ->latest()
             ->paginate($this->perPage);
 
-        // ─── Totals (semua data, bukan hanya halaman aktif) ──────────────
-        $totals = Pasar::selectRaw('
-            SUM(luas_lahan)          AS total_luas,
-            SUM(CASE WHEN ada_sertifikat = 1 THEN 1 ELSE 0 END) AS total_sertifikat_ada,
-            SUM(CASE WHEN ada_sertifikat = 0 THEN 1 ELSE 0 END) AS total_sertifikat_tidak,
-            SUM(jumlah_pedagang)     AS total_pedagang,
-            SUM(kios)                AS total_kios,
-            SUM(los)                 AS total_los,
-            SUM(lapak)               AS total_lapak,
-            SUM(ruko)                AS total_ruko,
-            SUM(kondisi_baik)        AS total_baik,
-            SUM(kondisi_rusak)       AS total_rusak,
-            SUM(kondisi_terpakai)    AS total_terpakai,
-            SUM(kepala_pasar)        AS total_kepala_pasar,
-            SUM(petugas_kebersihan)  AS total_kebersihan,
-            SUM(petugas_keamanan)    AS total_keamanan,
-            SUM(retribusi)           AS total_retribusi,
-            COUNT(*)                 AS total_pasar
-        ')->first();
+        // ─── Totals Global dari Cache ─────────────────────────────────────
+        $totals = PasarsCacheHelper::getGlobalTotals();
+        $totalPasar = PasarsCacheHelper::getTotalPasar();
 
         return view('livewire.dashboard.sarana-prasarana', [
             'pasars'     => $pasars,
-            'totalPasar' => $totals->total_pasar ?? 0,
+            'totalPasar' => $totalPasar,
             'totals'     => $totals,
         ])->layout('layouts.dashboard.main');
     }
