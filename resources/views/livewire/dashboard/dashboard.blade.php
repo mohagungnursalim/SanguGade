@@ -1,4 +1,4 @@
-<div class="space-y-6" wire:poll.10s="pollData">
+<div class="space-y-6" wire:poll.5s="pollData">
 
     {{-- =====================================================================
          KOP INFORMASI DASHBOARD
@@ -24,7 +24,7 @@
         <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Diperbarui tiap 10 detik
+                Diperbarui setiap 5 detik
             </span>
             {{-- <a
                 wire:navigate
