@@ -43,11 +43,19 @@ class PasarsCacheHelper
     /**
      * Ambil data ringkasan sarana prasarana global (cached)
      */
-    public static function getGlobalTotals()
+    public static function getGlobalTotals(?int $pasarId = null)
     {
-        $key = self::$baseKey . '_global_totals';
-        return Cache::remember($key, self::$ttl, function () {
-            return Pasar::selectRaw('
+        $key = self::$baseKey . '_global_totals_' . ($pasarId ?: 'all');
+        self::trackCacheKey($key);
+
+        return Cache::remember($key, self::$ttl, function () use ($pasarId) {
+            $query = Pasar::query();
+
+            if (!empty($pasarId)) {
+                $query->where('id', $pasarId);
+            }
+
+            return $query->selectRaw('
                 COALESCE(SUM(luas_lahan), 0)          AS total_luas,
                 SUM(CASE WHEN ada_sertifikat = 1 THEN 1 ELSE 0 END) AS total_sertifikat_ada,
                 SUM(CASE WHEN ada_sertifikat = 0 THEN 1 ELSE 0 END) AS total_sertifikat_tidak,

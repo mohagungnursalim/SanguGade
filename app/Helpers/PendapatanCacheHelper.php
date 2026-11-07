@@ -32,6 +32,75 @@ class PendapatanCacheHelper
     }
 
     /**
+     * Ambil statistik ringkasan kartu berdasarkan filter (cached progresif)
+     */
+    public static function getFilteredSummary(
+        string $timeframe = 'bulan',
+        $pasarId = null,
+        $tahun = null,
+        $bulan = null,
+        $startDate = null,
+        $endDate = null
+    ): array {
+        $tahun = $tahun ?: (int) date('Y');
+        $cacheKey = sprintf(
+            '%s_summary_%s_%s_%s_%s_%s_%s',
+            self::$baseKey,
+            $timeframe,
+            $pasarId ?: 'all',
+            $tahun ?: 'all',
+            $bulan ?: 'all',
+            $startDate ?: 'none',
+            $endDate ?: 'none'
+        );
+
+        self::trackCacheKey($cacheKey);
+
+        return Cache::remember($cacheKey, self::$ttl, function () use ($timeframe, $pasarId, $tahun, $bulan, $startDate, $endDate) {
+            $query = PendapatanPasar::query();
+
+            if (!empty($pasarId)) {
+                $query->where('pasar_id', $pasarId);
+            }
+
+            if ($timeframe === 'tahun') {
+                // Semua tahun / tren tahunan
+            } elseif ($timeframe === 'bulan') {
+                $query->where('tahun_retribusi', $tahun);
+            } elseif ($timeframe === 'hari') {
+                $targetMonth = $bulan ?: (int) date('m');
+                $query->whereYear('tanggal_penyetoran', $tahun)
+                      ->whereMonth('tanggal_penyetoran', $targetMonth);
+            } elseif ($timeframe === 'periode') {
+                $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
+                $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+
+                if ($start->gt($end)) {
+                    $tmp = $start;
+                    $start = $end->copy()->startOfDay();
+                    $end = $tmp->copy()->endOfDay();
+                }
+
+                $query->whereBetween('tanggal_penyetoran', [$start->toDateString(), $end->toDateString()]);
+            }
+
+            $totalRetribusi = (float) $query->sum('jumlah_retribusi');
+            $totalTransaksi = (int) $query->count();
+
+            // Rekap per pasar pada filter aktif
+            $pasarStatsQuery = (clone $query)->selectRaw('pasar_id, COUNT(*) as transaksi_count, SUM(jumlah_retribusi) as total_nominal')
+                ->groupBy('pasar_id');
+            $pasarStats = $pasarStatsQuery->get()->keyBy('pasar_id');
+
+            return [
+                'total_retribusi' => $totalRetribusi,
+                'total_transaksi' => $totalTransaksi,
+                'pasar_stats'     => $pasarStats,
+            ];
+        });
+    }
+
+    /**
      * Ambil rekapitulasi ringkasan per pasar (cached)
      */
     public static function getRingkasanPerPasar()

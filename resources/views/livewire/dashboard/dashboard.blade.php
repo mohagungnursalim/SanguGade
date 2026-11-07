@@ -1,4 +1,6 @@
-<div class="space-y-6" wire:poll.5s="pollData">
+<div class="space-y-6" wire:poll.5000ms>
+    {{-- =====================================================================
+         KOP FILTER DASHBOARD
 
     {{-- =====================================================================
          KOP INFORMASI DASHBOARD
@@ -23,26 +25,20 @@
         {{-- Badge Status Cache Global --}}
         <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Diperbarui setiap 5 detik
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Global Cache Active
             </span>
-            {{-- <a
-                wire:navigate
-                href="{{ route('dashboard.pendapatan-pasar') }}"
-                class="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">
-                <i class="fa-solid fa-plus mr-1"></i> Kelola SSRD
-            </a> --}}
         </div>
     </div>
 
     {{-- =====================================================================
-         4 KARTU STATISTIK UTAMA (DIAMBIL DARI GLOBAL CACHE)
+         4 KARTU STATISTIK UTAMA (MENGIKUTI FILTERING AKTIF)
     ====================================================================== --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {{-- Total Pendapatan Retribusi --}}
+        {{-- Total Pendapatan Retribusi Sesuai Filter --}}
         <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden group">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Retribusi SSRD</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Retribusi (Filter)</span>
                 <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-vault"></i>
                 </span>
@@ -52,14 +48,14 @@
             </p>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                 <i class="fa-solid fa-receipt text-emerald-500"></i>
-                <span>{{ number_format($totalTransaksi) }} total transaksi tersimpan</span>
+                <span>{{ number_format($totalTransaksi) }} transaksi pada filter aktif</span>
             </p>
         </div>
 
-        {{-- Total Pasar --}}
+        {{-- Total Pasar Terkelola / Terpilih --}}
         <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden group">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Pasar Terkelola</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Pasar Dipantau</span>
                 <span class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-shop"></i>
                 </span>
@@ -67,9 +63,9 @@
             <p class="text-2xl font-black text-gray-900 dark:text-white">
                 {{ $totalPasar }} Pasar
             </p>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                <i class="fa-solid fa-certificate text-blue-500"></i>
-                <span>{{ $pasarTotals->total_sertifikat_ada ?? 0 }} bersertifikat ({{ $pasarTotals->total_sertifikat_tidak ?? 0 }} belum)</span>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 truncate" title="{{ $namaFilterPasar }}">
+                <i class="fa-solid fa-location-dot text-blue-500"></i>
+                <span>{{ $namaFilterPasar }}</span>
             </p>
         </div>
 
@@ -103,7 +99,7 @@
             </p>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                 <i class="fa-solid fa-check-circle text-green-500"></i>
-                <span>{{ number_format($pasarTotals->total_baik ?? 0) }} unit sarana kondisi baik</span>
+                <span>{{ number_format($pasarTotals->total_baik ?? 0) }} unit sarana baik</span>
             </p>
         </div>
     </div>
@@ -112,8 +108,8 @@
          PANEL GRAFIK PENDAPATAN PASAR (LINE CHART) DENGAN FILTER LENGKAP
     ====================================================================== --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6"
-         x-data="chartManager(@js($chartData))"
-         x-init="initChart()"
+         x-data="chartManager()"
+         x-init="initChart(@js($chartData))"
          @chart-data-updated.window="updateChart($event.detail.chartData)"
     >
         {{-- Header Grafik & Tab Timeframe (Tahun / Bulan / Hari / Periode A ke B) --}}
@@ -241,15 +237,15 @@
             <div class="flex items-center gap-4">
                 <div>
                     <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Total Pada Periode Ini:</span>
-                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400" x-text="'Rp ' + Number(chartData.total || 0).toLocaleString('id-ID')"></span>
+                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400" x-text="formatRupiah(chartData?.total)">Rp {{ number_format($chartData['total'] ?? 0, 0, ',', '.') }}</span>
                 </div>
                 <div class="hidden sm:block border-l border-gray-200 dark:border-gray-700 pl-4">
                     <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Tertinggi:</span>
-                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="'Rp ' + Number(chartData.max || 0).toLocaleString('id-ID')"></span>
+                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="formatRupiah(chartData?.max)">Rp {{ number_format($chartData['max'] ?? 0, 0, ',', '.') }}</span>
                 </div>
                 <div class="hidden sm:block border-l border-gray-200 dark:border-gray-700 pl-4">
                     <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Rata-rata:</span>
-                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="'Rp ' + Math.round(chartData.avg || 0).toLocaleString('id-ID')"></span>
+                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="formatRupiah(chartData?.avg)">Rp {{ number_format($chartData['avg'] ?? 0, 0, ',', '.') }}</span>
                 </div>
             </div>
 
@@ -370,14 +366,28 @@
 /**
  * Alpine component untuk mengontrol Chart.js Line Chart
  */
-function chartManager(initialData) {
+function chartManager() {
     return {
         chartInstance: null,
-        chartData: initialData,
+        chartData: null,
 
-        initChart() {
+        formatRupiah(val) {
+            return 'Rp ' + Number(val || 0).toLocaleString('id-ID');
+        },
+
+        initChart(initialData) {
+            if (initialData) {
+                this.chartData = initialData;
+            }
+
             const ctx = document.getElementById('pendapatanLineChart');
             if (!ctx) return;
+
+            // Pastikan library Chart.js sudah termuat
+            if (typeof Chart === 'undefined') {
+                setTimeout(() => this.initChart(initialData), 100);
+                return;
+            }
 
             // Jika canvas sudah punya instance Chart.js sebelumnya, bersihkan agar tidak duplikasi
             const existing = Chart.getChart(ctx);
@@ -418,9 +428,10 @@ function chartManager(initialData) {
                         tension: 0.38,
                         pointBackgroundColor: '#059669',
                         pointBorderColor: '#ffffff',
-                        pointBorderWidth: 1.5,
+                        pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
+                        pointHitRadius: 15,
                         spanGaps: true,
                     }]
                 },
@@ -428,10 +439,15 @@ function chartManager(initialData) {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: {
-                        duration: 500,
+                        duration: 300,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: false,
                     },
                     interaction: {
-                        mode: 'index',
+                        mode: 'nearest',
+                        axis: 'x',
                         intersect: false,
                     },
                     plugins: {
@@ -439,6 +455,10 @@ function chartManager(initialData) {
                             display: false,
                         },
                         tooltip: {
+                            enabled: true,
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false,
                             backgroundColor: '#111827',
                             titleColor: '#ffffff',
                             bodyColor: '#10b981',
@@ -495,7 +515,7 @@ function chartManager(initialData) {
 
             const ctx = document.getElementById('pendapatanLineChart');
             if (!this.chartInstance && ctx) {
-                this.initChart();
+                this.initChart(newData);
                 return;
             }
 
@@ -510,5 +530,18 @@ function chartManager(initialData) {
         }
     };
 }
+
+// Fallback listener agar chart di-init saat navigasi SPA Livewire berpindah ke dashboard
+document.addEventListener('livewire:navigated', () => {
+    const ctx = document.getElementById('pendapatanLineChart');
+    if (ctx && typeof Chart !== 'undefined' && !Chart.getChart(ctx)) {
+        if (typeof window.chartManager === 'function') {
+            const el = ctx.closest('[x-data]');
+            if (el && el._x_dataStack && el._x_dataStack[0]) {
+                el._x_dataStack[0].initChart();
+            }
+        }
+    }
+});
 </script>
 @endpush
