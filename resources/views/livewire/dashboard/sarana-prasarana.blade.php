@@ -83,325 +83,360 @@
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-center text-gray-700 dark:text-gray-300 border-collapse">
 
-                {{-- ── THEAD: 2 baris dengan rowspan & colspan ── --}}
-                <thead>
-                    {{-- Baris 1 --}}
-                    <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200">
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">No</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap min-w-[150px]">Nama Pasar</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Foto</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Tahun Pembangunan</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Luas Lahan m²</th>
-                        <th colspan="2" class="border border-gray-600 px-2 py-2 align-middle">Sertifikat</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Kecamatan</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Kelurahan</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Status Pasar</th>
-                        <th colspan="5" class="border border-gray-600 px-2 py-2 align-middle">Jumlah</th>
-                        <th colspan="3" class="border border-gray-600 px-2 py-2 align-middle">Kondisi Bangunan</th>
-                        <th colspan="4" class="border border-gray-600 px-2 py-2 align-middle">Jumlah Tenaga</th>
-                        <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Aksi</th>
-                    </tr>
+    {{-- ── THEAD: 2 baris dengan rowspan & colspan ── --}}
+    <thead>
+        {{-- Baris 1 --}}
+        <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200">
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">No</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap min-w-[150px]">Nama Pasar</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Foto</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Tahun Pembangunan</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Luas Lahan m²</th>
 
-                    {{-- Baris 2 --}}
-                    <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200">
-                        {{-- Sertifikat --}}
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Ada</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Tidak</th>
-                        {{-- Jumlah --}}
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Pedagang</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kios Petak</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Los Petak</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Lapak/ Pelataran</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Ruko</th>
-                        {{-- Kondisi --}}
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Baik</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Rusak</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Terpakai</th>
-                        {{-- Tenaga --}}
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kepala Pasar</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kebersihan</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Keamanan</th>
-                        <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Retribusi</th>
-                    </tr>
-                </thead>
+            <th colspan="2" class="border border-gray-600 px-2 py-2 align-middle">Sertifikat</th>
 
-                {{-- ── TBODY ── --}}
-                <tbody @click.stop="
-                    const btn = $event.target.closest('.btn-edit-pasar');
-                    if (btn) {
-                        const pasarData = JSON.parse(btn.dataset.pasar);
-                        openEditModal(pasarData);
-                    }
-                ">
-                    @forelse ($pasars as $index => $pasar)
-                    <tr wire:key="pasar-row{{ $pasar->id }}" class="bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition border-b border-gray-200 dark:border-gray-700">
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Kecamatan</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Kelurahan</th>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Status Pasar</th>
 
-                        {{-- No --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            {{ $pasars->firstItem() + $index }}
-                        </td>
+            <th colspan="6" class="border border-gray-600 px-2 py-2 align-middle">Jumlah</th>
 
-                        {{-- Nama Pasar --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-left font-medium text-gray-900 dark:text-white">
-                            {{ $pasar->nama_pasar }}
-                        </td>
+            <th colspan="3" class="border border-gray-600 px-2 py-2 align-middle">Kondisi Bangunan</th>
 
-                        {{-- Foto --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            @if ($pasar->image)
-                                <img
-                                    src="{{ asset('storage/' . $pasar->image) }}"
-                                    alt="{{ $pasar->nama_pasar }}"
-                                    @click="$dispatch('open-image-modal', { src: '{{ asset('storage/' . $pasar->image) }}', title: '{{ $pasar->nama_pasar }}' })"
-                                    class="w-12 h-12 object-cover rounded border border-gray-600 dark:border-gray-600 mx-auto cursor-pointer hover:opacity-80 transition duration-150 shadow-sm"
-                                    title="Klik untuk memperbesar"
-                                />
-                            @else
-                                <div class="w-12 h-12 flex items-center justify-center rounded bg-gray-100 dark:bg-gray-700 border border-gray-600 dark:border-gray-600 mx-auto">
-                                    <i class="fas fa-store text-gray-300 dark:text-gray-600"></i>
-                                </div>
-                            @endif
-                        </td>
+            <th colspan="4" class="border border-gray-600 px-2 py-2 align-middle">Jumlah Tenaga</th>
 
-                        {{-- Tahun Pembangunan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            {{ $pasar->tahun_pembangunan ?? '-' }}
-                        </td>
+            <th rowspan="2" class="border border-gray-600 px-2 py-2 align-middle whitespace-nowrap">Aksi</th>
+        </tr>
 
-                        {{-- Luas Lahan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            {{ $pasar->luas_lahan ? number_format($pasar->luas_lahan) : '-' }}
-                        </td>
+        {{-- Baris 2 --}}
+        <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200">
 
-                        {{-- Sertifikat: Ada --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            @if ($pasar->ada_sertifikat)
-                                <i class="fas fa-check text-green-600 dark:text-green-400"></i>
-                            @endif
-                        </td>
+            {{-- Sertifikat --}}
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Ada</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Tidak</th>
 
-                        {{-- Sertifikat: Tidak --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            @if (!$pasar->ada_sertifikat)
-                                <i class="fas fa-times text-red-500 dark:text-red-400"></i>
-                            @endif
-                        </td>
+            {{-- Jumlah --}}
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Pedagang Tetap (PT)</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Pedagang Tidak Tetap (PTT)</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kios Petak</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Los Petak</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Lapak/ Pelataran</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Ruko</th>
 
-                        {{-- Kecamatan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kecamatan }}</td>
+            {{-- Kondisi --}}
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Baik</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Rusak</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Terpakai</th>
 
-                        {{-- Kelurahan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kelurahan }}</td>
+            {{-- Tenaga --}}
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kepala Pasar</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Kebersihan</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Keamanan</th>
+            <th class="border border-gray-600 px-2 py-1.5 whitespace-nowrap">Retribusi</th>
 
-                        {{-- Status --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            @if ($pasar->status_pasar === 'harian')
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
-                                    Harian
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                                    Mingguan
-                                </span>
-                            @endif
-                        </td>
+        </tr>
+    </thead>
 
-                        {{-- Jumlah Pedagang --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->jumlah_pedagang }}</td>
-                        {{-- Kios --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kios }}</td>
-                        {{-- Los --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->los }}</td>
-                        {{-- Lapak --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->lapak }}</td>
-                        {{-- Ruko --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->ruko }}</td>
+    {{-- ── TBODY ── --}}
+    <tbody @click.stop="
+        const btn = $event.target.closest('.btn-edit-pasar');
+        if (btn) {
+            const pasarData = JSON.parse(btn.dataset.pasar);
+            openEditModal(pasarData);
+        }
+    ">
+        @forelse ($pasars as $index => $pasar)
+        <tr wire:key="pasar-row{{ $pasar->id }}" class="bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition border-b border-gray-200 dark:border-gray-700">
 
-                        {{-- Kondisi Baik --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-green-700 dark:text-green-400 font-medium">{{ $pasar->kondisi_baik }}</td>
-                        {{-- Kondisi Rusak --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-red-600 dark:text-red-400 font-medium">{{ $pasar->kondisi_rusak }}</td>
-                        {{-- Terpakai --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kondisi_terpakai }}</td>
+            {{-- No --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                {{ $pasars->firstItem() + $index }}
+            </td>
 
-                        {{-- Kepala Pasar --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kepala_pasar }}</td>
-                        {{-- Kebersihan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->petugas_kebersihan }}</td>
-                        {{-- Keamanan --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->petugas_keamanan }}</td>
-                        {{-- Retribusi --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->retribusi }}</td>
+            {{-- Nama Pasar --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-left font-medium text-gray-900 dark:text-white">
+                {{ $pasar->nama_pasar }}
+            </td>
 
-                        {{-- Aksi --}}
-                        <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
-                            <div class="flex items-center justify-center gap-1">
-                                
-                                {{-- Tombol Edit yang sudah DIPERBAIKI (Gunakan kutip tunggal dan @json) --}}
-                                {{-- <button
-                                    type="button"
-                                    @click='openEditModal(@json($pasar))'
-                                    class="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-400 hover:bg-amber-500 text-white transition"
-                                    title="Edit"
-                                >
-                                    <i class="fas fa-edit text-xs"></i>
-                                </button> --}}
-
-                                {{-- Tombol Edit menggunakan class 'btn-edit-pasar' dan dataset JSON --}}
-                                <button
-                                    type="button"
-                                    data-pasar="{{ json_encode($pasar) }}"
-                                    class="btn-edit-pasar inline-flex items-center justify-center w-7 h-7 rounded bg-amber-400 hover:bg-amber-500 text-white transition cursor-pointer"
-                                    title="Edit"
-                                >
-                                    <i class="fas fa-edit text-xs pointer-events-none"></i>
-                                </button>
-
-                                {{-- Hapus --}}
-                                <button
-                                    type="button"
-                                    wire:click="confirmDelete({{ $pasar->id }})"
-                                    wire:loading.attr="disabled"
-                                    wire:target="confirmDelete({{ $pasar->id }})"
-                                    class="inline-flex items-center justify-center w-7 h-7 rounded
-                                           bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50"
-                                    title="Hapus"
-                                >
-                                    <i class="fas fa-trash text-xs"></i>
-                                </button>
-                            </div>
-                        </td>
-
-                    </tr>
-                    @empty
-                    <tr wire:key="pasar-empty">
-                        <td colspan="22" class="px-6 py-16 text-center border border-gray-200 dark:border-gray-700">
-                            <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
-                                <i class="fas fa-store-slash text-4xl"></i>
-                                <p class="font-medium text-gray-500 dark:text-gray-400">Belum ada data pasar</p>
-                                <p class="text-xs">Klik tombol <span class="font-semibold text-blue-500">Tambah Pasar</span> untuk menambahkan data.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-
-                {{-- ── TFOOT: Baris Total ── --}}
-                @if ($pasars->isNotEmpty())
-                <tfoot>
-                    <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200 font-semibold text-xs">
-                        <td colspan="5" class="border border-gray-600 px-3 py-2 text-center font-bold tracking-wide uppercase">
-                            Total
-                        </td>
-
-                        {{-- Total Luas --}}
-                        {{-- <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_luas ?? 0) }} m²
-                            </span>
-                        </td> --}}
-
-                        {{-- Sertifikat Ada --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ $totals->total_sertifikat_ada ?? 0 }}
-                            </span>
-                        </td>
-
-                        {{-- Sertifikat Tidak --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-gray-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ $totals->total_sertifikat_tidak ?? 0 }}
-                            </span>
-                        </td>
-
-                        {{-- Kecamatan, Kelurahan, Status (kosong) --}}
-                        <td class="border border-gray-600 px-2 py-2"></td>
-                        <td class="border border-gray-600 px-2 py-2"></td>
-                        <td class="border border-gray-600 px-2 py-2"></td>
-
-                        {{-- Total Pedagang --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_pedagang ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Kios --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_kios ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Los --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_los ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Lapak --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_lapak ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Ruko --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_ruko ?? 0) }}
-                            </span>
-                        </td>
-
-                        {{-- Total Kondisi Baik --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_baik ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Kondisi Rusak --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_rusak ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Terpakai --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_terpakai ?? 0) }}
-                            </span>
-                        </td>
-
-                        {{-- Total Kepala Pasar --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_kepala_pasar ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Kebersihan --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_kebersihan ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Keamanan --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_keamanan ?? 0) }}
-                            </span>
-                        </td>
-                        {{-- Total Retribusi --}}
-                        <td class="border border-gray-600 px-2 py-2 text-center">
-                            <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                {{ number_format($totals->total_retribusi ?? 0) }}
-                            </span>
-                        </td>
-
-                        {{-- Aksi (kosong di footer) --}}
-                        <td class="border border-gray-600 px-2 py-2"></td>
-                    </tr>
-                </tfoot>
+            {{-- Foto --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                @if ($pasar->image)
+                    <img
+                        src="{{ asset('storage/' . $pasar->image) }}"
+                        alt="{{ $pasar->nama_pasar }}"
+                        @click="$dispatch('open-image-modal', { src: '{{ asset('storage/' . $pasar->image) }}', title: '{{ $pasar->nama_pasar }}' })"
+                        class="w-12 h-12 object-cover rounded border border-gray-600 dark:border-gray-600 mx-auto cursor-pointer hover:opacity-80 transition duration-150 shadow-sm"
+                        title="Klik untuk memperbesar"
+                    />
+                @else
+                    <div class="w-12 h-12 flex items-center justify-center rounded bg-gray-100 dark:bg-gray-700 border border-gray-600 dark:border-gray-600 mx-auto">
+                        <i class="fas fa-store text-gray-300 dark:text-gray-600"></i>
+                    </div>
                 @endif
+            </td>
 
-            </table>
+            {{-- Tahun Pembangunan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                {{ $pasar->tahun_pembangunan ?? '-' }}
+            </td>
+
+            {{-- Luas Lahan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                {{ $pasar->luas_lahan ? number_format($pasar->luas_lahan) : '-' }}
+            </td>
+
+            {{-- Sertifikat: Ada --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                @if ($pasar->ada_sertifikat)
+                    <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                @endif
+            </td>
+
+            {{-- Sertifikat: Tidak --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                @if (!$pasar->ada_sertifikat)
+                    <i class="fas fa-times text-red-500 dark:text-red-400"></i>
+                @endif
+            </td>
+
+            {{-- Kecamatan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kecamatan }}</td>
+
+            {{-- Kelurahan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kelurahan }}</td>
+
+            {{-- Status --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                @if ($pasar->status_pasar === 'harian')
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                        Harian
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                        Mingguan
+                    </span>
+                @endif
+            </td>
+
+            {{-- Jumlah Pedagang --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->jumlah_pedagang }}</td>
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->ptt }}</td>
+
+            {{-- Kios --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kios }}</td>
+
+            {{-- Los --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->los }}</td>
+
+            {{-- Lapak --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->lapak }}</td>
+
+            {{-- Ruko --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->ruko }}</td>
+
+            {{-- Kondisi Baik --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-green-700 dark:text-green-400 font-medium">{{ $pasar->kondisi_baik }}</td>
+
+            {{-- Kondisi Rusak --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2 text-red-600 dark:text-red-400 font-medium">{{ $pasar->kondisi_rusak }}</td>
+
+            {{-- Terpakai --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kondisi_terpakai }}</td>
+
+            {{-- Kepala Pasar --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->kepala_pasar }}</td>
+
+            {{-- Kebersihan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->petugas_kebersihan }}</td>
+
+            {{-- Keamanan --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->petugas_keamanan }}</td>
+
+            {{-- Retribusi --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">{{ $pasar->retribusi }}</td>
+
+
+            {{-- Aksi --}}
+            <td class="border border-gray-600 dark:border-gray-700 px-2 py-2">
+                <div class="flex items-center justify-center gap-1">
+
+                    {{-- Tombol Edit menggunakan class 'btn-edit-pasar' dan dataset JSON --}}
+                    <button
+                        type="button"
+                        data-pasar="{{ json_encode($pasar) }}"
+                        class="btn-edit-pasar inline-flex items-center justify-center w-7 h-7 rounded bg-amber-400 hover:bg-amber-500 text-white transition cursor-pointer"
+                        title="Edit"
+                    >
+                        <i class="fas fa-edit text-xs pointer-events-none"></i>
+                    </button>
+
+                    {{-- Hapus --}}
+                    <button
+                        type="button"
+                        wire:click="confirmDelete({{ $pasar->id }})"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmDelete({{ $pasar->id }})"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded
+                               bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50"
+                        title="Hapus"
+                    >
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+
+                </div>
+            </td>
+
+        </tr>
+        @empty
+        <tr wire:key="pasar-empty">
+            <td colspan="25" class="px-6 py-16 text-center border border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-store-slash text-4xl"></i>
+                    <p class="font-medium text-gray-500 dark:text-gray-400">Belum ada data pasar</p>
+                    <p class="text-xs">Klik tombol <span class="font-semibold text-blue-500">Tambah Pasar</span> untuk menambahkan data.</p>
+                </div>
+            </td>
+        </tr>
+        @endforelse
+    </tbody>
+
+    {{-- ── TFOOT: Baris Total ── --}}
+    @if ($pasars->isNotEmpty())
+    <tfoot>
+        <tr class="bg-gray-200 dark:bg-gray-700 dark:text-gray-200 font-semibold text-xs">
+
+            <td colspan="5" class="border border-gray-600 px-3 py-2 text-center font-bold tracking-wide uppercase">
+                Total
+            </td>
+
+            {{-- Total Luas --}}
+            {{-- <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_luas ?? 0) }} m²
+                </span>
+            </td> --}}
+
+            {{-- Sertifikat Ada --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ $totals->total_sertifikat_ada ?? 0 }}
+                </span>
+            </td>
+
+            {{-- Sertifikat Tidak --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-gray-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ $totals->total_sertifikat_tidak ?? 0 }}
+                </span>
+            </td>
+
+            {{-- Kecamatan, Kelurahan, Status (kosong) --}}
+            <td class="border border-gray-600 px-2 py-2"></td>
+            <td class="border border-gray-600 px-2 py-2"></td>
+            <td class="border border-gray-600 px-2 py-2"></td>
+
+            {{-- Total Pedagang --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_pedagang ?? 0) }}
+                </span>
+            </td>
+
+            {{-- PTT: total belum tersedia --}}
+            <td class="border border-gray-600 px-2 py-2">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_ptt ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Kios --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_kios ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Los --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_los ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Lapak --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_lapak ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Ruko --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_ruko ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Kondisi Baik --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_baik ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Kondisi Rusak --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_rusak ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Terpakai --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_terpakai ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Kepala Pasar --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_kepala_pasar ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Kebersihan --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_kebersihan ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Keamanan --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_keamanan ?? 0) }}
+                </span>
+            </td>
+
+            {{-- Total Retribusi --}}
+            <td class="border border-gray-600 px-2 py-2 text-center">
+                <span class="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {{ number_format($totals->total_retribusi ?? 0) }}
+                </span>
+            </td>
+
+            {{-- PTT kedua: total belum tersedia --}}
+            <td class="border border-gray-600 px-2 py-2"></td>
+
+            {{-- Aksi (kosong di footer) --}}
+            <td class="border border-gray-600 px-2 py-2"></td>
+
+        </tr>
+    </tfoot>
+    @endif
+
+</table>
         </div>
 
         {{-- Pagination --}}
@@ -428,7 +463,7 @@
         class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-8 px-4"
     >
         <div
-            @click.outside="closeModal()"
+            
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
@@ -467,7 +502,7 @@
                     class="px-6 py-5 space-y-6">
 
                     {{-- 1. Informasi Umum --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-info-circle"></i> Informasi Umum
                         </legend>
@@ -622,7 +657,7 @@
                     </fieldset>
 
                     {{-- 2. Lokasi & Status --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-map-marker-alt"></i> Lokasi &amp; Status
                         </legend>
@@ -683,13 +718,14 @@
                     </fieldset>
 
                     {{-- 3. Aktivitas & Kapasitas --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-users"></i> Data Aktivitas &amp; Kapasitas
                         </legend>
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                             @foreach([
-                                ['jumlah_pedagang', 'Pedagang'],
+                                ['jumlah_pedagang', 'Pedagang Tetap'],
+                                ['ptt', 'Pedagang Tidak Tetap (PTT)'],
                                 ['kios', 'Kios/Petak'],
                                 ['los', 'Los/Petak'],
                                 ['lapak', 'Lapak Pelataran'],
@@ -715,7 +751,7 @@
                     </fieldset>
 
                     {{-- 4. Kondisi Sarana --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-building"></i> Kondisi Sarana
                         </legend>
@@ -749,7 +785,7 @@
                     </fieldset>
 
                     {{-- 5. Pengelolaan --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-user-tie"></i> Pengelolaan Pasar
                         </legend>
@@ -778,6 +814,7 @@
                             @endforeach
                         </div>
                     </fieldset>
+
 
                     {{-- Footer Form Create --}}
                     <div class="flex justify-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
@@ -816,7 +853,7 @@
                     class="px-6 py-5 space-y-6">
 
                     {{-- 1. Informasi Umum --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-info-circle"></i> Informasi Umum
                         </legend>
@@ -974,7 +1011,7 @@
                     </fieldset>
 
                     {{-- 2. Lokasi & Status (Edit) --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-map-marker-alt"></i> Lokasi &amp; Status
                         </legend>
@@ -1036,13 +1073,14 @@
                     </fieldset>
 
                     {{-- 3. Aktivitas & Kapasitas (Edit) --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-users"></i> Data Aktivitas &amp; Kapasitas
                         </legend>
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                             @foreach([
-                                ['editJumlahPedagang', 'Pedagang'],
+                                ['editJumlahPedagang', 'Pedagang Tetap'],
+                                ['editPtt', 'Pedagang Tidak Tetap (PTT)'],
                                 ['editKios', 'Kios/Petak'],
                                 ['editLos', 'Los/Petak'],
                                 ['editLapak', 'Lapak Pelataran'],
@@ -1067,7 +1105,7 @@
                     </fieldset>
 
                     {{-- 4. Kondisi Sarana (Edit) --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-building"></i> Kondisi Sarana
                         </legend>
@@ -1100,7 +1138,7 @@
                     </fieldset>
 
                     {{-- 5. Pengelolaan (Edit) --}}
-                    <fieldset>
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
                             <i class="fas fa-user-tie"></i> Pengelolaan Pasar
                         </legend>
@@ -1312,6 +1350,7 @@ function pasarManager() {
             this.$wire.set('editKelurahan',         pasar.kelurahan        ?? '');
             this.$wire.set('editStatusPasar',       pasar.status_pasar     ?? 'harian');
             this.$wire.set('editJumlahPedagang',    pasar.jumlah_pedagang  ?? 0);
+            this.$wire.set('editPtt',               pasar.ptt              ?? 0);
             this.$wire.set('editKios',              pasar.kios             ?? 0);
             this.$wire.set('editLos',               pasar.los              ?? 0);
             this.$wire.set('editLapak',             pasar.lapak            ?? 0);

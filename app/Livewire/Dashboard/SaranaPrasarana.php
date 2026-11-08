@@ -91,6 +91,7 @@ class SaranaPrasarana extends Component
             'kelurahan'          => 'required|string|max:255',
             'status_pasar'       => 'required|in:harian,mingguan',
             'jumlah_pedagang'    => 'required|integer|min:0',
+            'ptt'                => 'required|integer|min:0',
             'kios'               => 'required|integer|min:0',
             'los'                => 'required|integer|min:0',
             'lapak'              => 'required|integer|min:0',
@@ -102,7 +103,6 @@ class SaranaPrasarana extends Component
             'petugas_kebersihan' => 'required|integer|min:0',
             'petugas_keamanan'   => 'required|integer|min:0',
             'retribusi'          => 'required|integer|min:0',
-            'ptt'                => 'required|integer|min:0',
         ];
     }
 
@@ -118,6 +118,7 @@ class SaranaPrasarana extends Component
             'editKelurahan'         => 'required|string|max:255',
             'editStatusPasar'       => 'required|in:harian,mingguan',
             'editJumlahPedagang'    => 'required|integer|min:0',
+            'editPtt'               => 'required|integer|min:0',
             'editKios'              => 'required|integer|min:0',
             'editLos'               => 'required|integer|min:0',
             'editLapak'             => 'required|integer|min:0',
@@ -129,7 +130,6 @@ class SaranaPrasarana extends Component
             'editPetugasKebersihan' => 'required|integer|min:0',
             'editPetugasKeamanan'   => 'required|integer|min:0',
             'editRetribusi'         => 'required|integer|min:0',
-            'editPtt'               => 'required|integer|min:0',
         ];
     }
 
@@ -170,6 +170,7 @@ class SaranaPrasarana extends Component
         $this->editKelurahan        = $pasar->kelurahan;
         $this->editStatusPasar      = $pasar->status_pasar;
         $this->editJumlahPedagang   = (int) $pasar->jumlah_pedagang;
+        $this->editPtt              = (int) $pasar->ptt;
         $this->editKios             = (int) $pasar->kios;
         $this->editLos              = (int) $pasar->los;
         $this->editLapak            = (int) $pasar->lapak;
@@ -181,7 +182,6 @@ class SaranaPrasarana extends Component
         $this->editPetugasKebersihan = (int) $pasar->petugas_kebersihan;
         $this->editPetugasKeamanan  = (int) $pasar->petugas_keamanan;
         $this->editRetribusi        = (int) $pasar->retribusi;
-        $this->editPtt              = (int) $pasar->ptt;
 
         $this->editImage     = null;
         $this->editImagePath = $pasar->image;
@@ -209,6 +209,7 @@ class SaranaPrasarana extends Component
             'kelurahan'          => $this->kelurahan,
             'status_pasar'       => $this->status_pasar,
             'jumlah_pedagang'    => $this->jumlah_pedagang,
+            'ptt'                => $this->ptt,
             'kios'               => $this->kios,
             'los'                => $this->los,
             'lapak'              => $this->lapak,
@@ -220,7 +221,6 @@ class SaranaPrasarana extends Component
             'petugas_kebersihan' => $this->petugas_kebersihan,
             'petugas_keamanan'   => $this->petugas_keamanan,
             'retribusi'          => $this->retribusi,
-            'ptt'                => $this->ptt,
         ]);
 
         $this->resetCreateForm();
@@ -257,6 +257,7 @@ class SaranaPrasarana extends Component
             'kelurahan'          => $this->editKelurahan,
             'status_pasar'       => $this->editStatusPasar,
             'jumlah_pedagang'    => $this->editJumlahPedagang,
+            'ptt'                => $this->editPtt,
             'kios'               => $this->editKios,
             'los'                => $this->editLos,
             'lapak'              => $this->editLapak,
@@ -268,7 +269,6 @@ class SaranaPrasarana extends Component
             'petugas_kebersihan' => $this->editPetugasKebersihan,
             'petugas_keamanan'   => $this->editPetugasKeamanan,
             'retribusi'          => $this->editRetribusi,
-            'ptt'                => $this->editPtt,
         ]);
 
         $this->resetEditForm();
@@ -339,7 +339,7 @@ class SaranaPrasarana extends Component
                   ->orWhere('kecamatan',  'like', '%' . $this->search . '%')
                   ->orWhere('kelurahan',  'like', '%' . $this->search . '%')
             )
-            ->latest()
+            ->oldest('tahun_pembangunan')
             ->paginate($this->perPage);
 
         // ─── Totals Global dari Cache ─────────────────────────────────────

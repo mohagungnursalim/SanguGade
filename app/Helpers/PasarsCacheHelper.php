@@ -73,6 +73,7 @@ class PasarsCacheHelper
                 SUM(CASE WHEN ada_sertifikat = 1 THEN 1 ELSE 0 END) AS total_sertifikat_ada,
                 SUM(CASE WHEN ada_sertifikat = 0 THEN 1 ELSE 0 END) AS total_sertifikat_tidak,
                 COALESCE(SUM(jumlah_pedagang), 0)     AS total_pedagang,
+                COALESCE(SUM(ptt), 0)                 AS total_ptt,
                 COALESCE(SUM(kios), 0)                AS total_kios,
                 COALESCE(SUM(los), 0)                 AS total_los,
                 COALESCE(SUM(lapak), 0)               AS total_lapak,
