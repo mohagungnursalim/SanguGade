@@ -3,12 +3,25 @@
 namespace App\Helpers;
 
 use App\Models\Pasar;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class PasarsCacheHelper
 {
     protected static int $ttl = 60 * 60 * 24 * 7; // 1 minggu
     protected static string $baseKey = 'cache_pasars';
+
+    /**
+     * Ambil waktu update terakhir data pasar (cached)
+     */
+    public static function getLastUpdated(): ?Carbon
+    {
+        $key = self::$baseKey . '_last_updated';
+        return Cache::remember($key, self::$ttl, function () {
+            $latest = Pasar::latest('updated_at')->value('updated_at');
+            return $latest ? Carbon::parse($latest) : null;
+        });
+    }
 
     /**
      * Ambil total seluruh pasar (cached)
@@ -81,6 +94,7 @@ class PasarsCacheHelper
      */
     public static function refreshAll(): void
     {
+        Cache::forget(self::$baseKey . '_last_updated');
         Cache::forget(self::$baseKey . '_total');
         Cache::forget(self::$baseKey . '_all_list');
         Cache::forget(self::$baseKey . '_global_totals');

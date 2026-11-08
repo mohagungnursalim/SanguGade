@@ -135,6 +135,17 @@ class Dashboard extends Component
 
         $chartData = $this->getChartData();
 
+        // Ambil timestamp update terakhir dari database (pendapatan atau pasar)
+        $latestPendapatanUpdate = PendapatanCacheHelper::getLastUpdated();
+        $latestPasarUpdate = PasarsCacheHelper::getLastUpdated();
+
+        $lastUpdated = null;
+        if ($latestPendapatanUpdate && $latestPasarUpdate) {
+            $lastUpdated = $latestPendapatanUpdate->gt($latestPasarUpdate) ? $latestPendapatanUpdate : $latestPasarUpdate;
+        } else {
+            $lastUpdated = $latestPendapatanUpdate ?: ($latestPasarUpdate ?: now());
+        }
+
         return view('livewire.dashboard.dashboard', [
             'pasars'            => $allPasars,
             'totalPasar'        => $totalPasar,
@@ -145,6 +156,7 @@ class Dashboard extends Component
             'ringkasanPerPasar' => $ringkasanPerPasar,
             'tahunList'         => $tahunList,
             'chartData'         => $chartData,
+            'lastUpdated'       => $lastUpdated,
         ])->layout('layouts.dashboard.main');
     }
 }

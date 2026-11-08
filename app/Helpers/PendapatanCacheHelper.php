@@ -14,6 +14,18 @@ class PendapatanCacheHelper
     protected static string $baseKey = 'cache_pendapatan';
 
     /**
+     * Ambil waktu update terakhir data pendapatan pasar (cached)
+     */
+    public static function getLastUpdated(): ?Carbon
+    {
+        $key = self::$baseKey . '_last_updated';
+        return Cache::remember($key, self::$ttl, function () {
+            $latest = PendapatanPasar::latest('updated_at')->value('updated_at');
+            return $latest ? Carbon::parse($latest) : null;
+        });
+    }
+
+    /**
      * Ambil total akumulasi pendapatan global (all-time)
      */
     public static function getTotalNominalAll(): float
@@ -279,6 +291,7 @@ class PendapatanCacheHelper
      */
     public static function refreshAll(): void
     {
+        Cache::forget(self::$baseKey . '_last_updated');
         Cache::forget(self::$baseKey . '_total_nominal_all');
         Cache::forget(self::$baseKey . '_total_transaksi_all');
         Cache::forget(self::$baseKey . '_ringkasan_per_pasar');

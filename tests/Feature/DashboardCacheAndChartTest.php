@@ -152,7 +152,7 @@ class DashboardCacheAndChartTest extends TestCase
         $response->assertSee('Dashboard Monitoring Sangu Gade');
         $response->assertSee('Pasar Rau Trade Center');
         $response->assertSee('Pasar Kragilan');
-        $response->assertSee('Global Cache Active');
+        $response->assertSee('Diperbarui');
     }
 
     public function test_dashboard_livewire_component_updates_timeframe(): void
