@@ -11,13 +11,46 @@ class PasarsCacheHelper
     protected static int $ttl = 60 * 60 * 24 * 7; // 1 minggu
     protected static string $baseKey = 'cache_pasars';
 
+    // ── Versioned Key ────────────────────────────────────────────────────────
+
+    /**
+     * Baca versi cache saat ini. Default ke 1 jika belum pernah diset.
+     */
+    protected static function version(): int
+    {
+        return (int) Cache::get(self::$baseKey . '_version', 1);
+    }
+
+    /**
+     * Bentuk cache key yang sudah mengandung versi aktif.
+     * Ketika versi naik, semua derived key otomatis menjadi stale
+     * tanpa perlu menghapus satu per satu (invalidasi O(1)).
+     */
+    protected static function vKey(string $suffix): string
+    {
+        return self::$baseKey . ':v' . self::version() . ':' . $suffix;
+    }
+
+    /**
+     * Invalidasi seluruh cache pasar dengan menaikkan nomor versi.
+     * Semua key lama menjadi unreachable secara instan.
+     * Cache::add memastikan key seed = 1 sebelum increment,
+     * sehingga versi selalu meningkat dari nilai yang sudah tersimpan.
+     */
+    public static function invalidate(): void
+    {
+        Cache::add(self::$baseKey . '_version', 1, self::$ttl);
+        Cache::increment(self::$baseKey . '_version');
+    }
+
+    // ── Public Methods ───────────────────────────────────────────────────────
+
     /**
      * Ambil waktu update terakhir data pasar (cached)
      */
     public static function getLastUpdated(): ?Carbon
     {
-        $key = self::$baseKey . '_last_updated';
-        return Cache::remember($key, self::$ttl, function () {
+        return Cache::remember(self::vKey('last_updated'), self::$ttl, function () {
             $latest = Pasar::latest('updated_at')->value('updated_at');
             return $latest ? Carbon::parse($latest) : null;
         });
@@ -28,8 +61,7 @@ class PasarsCacheHelper
      */
     public static function getTotalPasar(): int
     {
-        $key = self::$baseKey . '_total';
-        return (int) Cache::remember($key, self::$ttl, fn() => Pasar::count());
+        return (int) Cache::remember(self::vKey('total'), self::$ttl, fn () => Pasar::count());
     }
 
     /**
@@ -37,8 +69,7 @@ class PasarsCacheHelper
      */
     public static function getAllPasar()
     {
-        $key = self::$baseKey . '_all_list';
-        return Cache::remember($key, self::$ttl, function () {
+        return Cache::remember(self::vKey('all_list'), self::$ttl, function () {
             return Pasar::orderBy('nama_pasar')->get([
                 'id',
                 'nama_pasar',
@@ -48,7 +79,7 @@ class PasarsCacheHelper
                 'tahun_pembangunan',
                 'luas_lahan',
                 'ada_sertifikat',
-                'jumlah_pedagang'
+                'jumlah_pedagang',
             ]);
         });
     }
@@ -58,10 +89,9 @@ class PasarsCacheHelper
      */
     public static function getGlobalTotals(?int $pasarId = null)
     {
-        $key = self::$baseKey . '_global_totals_' . ($pasarId ?: 'all');
-        self::trackCacheKey($key);
+        $suffix = 'global_totals_' . ($pasarId ?: 'all');
 
-        return Cache::remember($key, self::$ttl, function () use ($pasarId) {
+        return Cache::remember(self::vKey($suffix), self::$ttl, function () use ($pasarId) {
             $query = Pasar::query();
 
             if (!empty($pasarId)) {
@@ -91,43 +121,16 @@ class PasarsCacheHelper
     }
 
     /**
-     * Refresh / invalidate semua cache pasar (progresif)
+     * Invalidate semua cache pasar lalu pre-warm entry global.
+     * Invalidasi bersifat O(1) — cukup increment version key.
      */
     public static function refreshAll(): void
     {
-        Cache::forget(self::$baseKey . '_last_updated');
-        Cache::forget(self::$baseKey . '_total');
-        Cache::forget(self::$baseKey . '_all_list');
-        Cache::forget(self::$baseKey . '_global_totals');
+        self::invalidate();
 
-        // Hapus query-query spesifik yang di-track
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $trackedKeys = Cache::get($trackerKey, []);
-
-        foreach ($trackedKeys as $k) {
-            Cache::forget($k);
-        }
-
-        Cache::forget($trackerKey);
-
-        // Pre-warm cache global kembali
+        // Pre-warm entry yang paling sering diakses
         self::getTotalPasar();
         self::getAllPasar();
         self::getGlobalTotals();
     }
-
-    /**
-     * Track dynamic query cache keys
-     */
-    public static function trackCacheKey(string $key): void
-    {
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $tracked = Cache::get($trackerKey, []);
-
-        if (!in_array($key, $tracked)) {
-            $tracked[] = $key;
-            Cache::put($trackerKey, $tracked, self::$ttl);
-        }
-    }
 }
-

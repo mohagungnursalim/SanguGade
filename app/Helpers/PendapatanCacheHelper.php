@@ -13,13 +13,46 @@ class PendapatanCacheHelper
     protected static int $ttl = 60 * 60 * 24 * 7; // 1 minggu
     protected static string $baseKey = 'cache_pendapatan';
 
+    // ── Versioned Key ────────────────────────────────────────────────────────
+
+    /**
+     * Baca versi cache saat ini. Default ke 1 jika belum pernah diset.
+     */
+    protected static function version(): int
+    {
+        return (int) Cache::get(self::$baseKey . '_version', 1);
+    }
+
+    /**
+     * Bentuk cache key yang sudah mengandung versi aktif.
+     * Ketika versi naik, semua derived key otomatis menjadi stale
+     * tanpa perlu menghapus satu per satu (invalidasi O(1)).
+     */
+    protected static function vKey(string $suffix): string
+    {
+        return self::$baseKey . ':v' . self::version() . ':' . $suffix;
+    }
+
+    /**
+     * Invalidasi seluruh cache pendapatan dengan menaikkan nomor versi.
+     * Semua key lama menjadi unreachable secara instan.
+     * Cache::add memastikan key seed = 1 sebelum increment,
+     * sehingga versi selalu meningkat dari nilai yang sudah tersimpan.
+     */
+    public static function invalidate(): void
+    {
+        Cache::add(self::$baseKey . '_version', 1, self::$ttl);
+        Cache::increment(self::$baseKey . '_version');
+    }
+
+    // ── Public Methods ───────────────────────────────────────────────────────
+
     /**
      * Ambil waktu update terakhir data pendapatan pasar (cached)
      */
     public static function getLastUpdated(): ?Carbon
     {
-        $key = self::$baseKey . '_last_updated';
-        return Cache::remember($key, self::$ttl, function () {
+        return Cache::remember(self::vKey('last_updated'), self::$ttl, function () {
             $latest = PendapatanPasar::latest('updated_at')->value('updated_at');
             return $latest ? Carbon::parse($latest) : null;
         });
@@ -30,8 +63,11 @@ class PendapatanCacheHelper
      */
     public static function getTotalNominalAll(): float
     {
-        $key = self::$baseKey . '_total_nominal_all';
-        return (float) Cache::remember($key, self::$ttl, fn() => PendapatanPasar::sum('jumlah_retribusi'));
+        return (float) Cache::remember(
+            self::vKey('total_nominal_all'),
+            self::$ttl,
+            fn () => PendapatanPasar::sum('jumlah_retribusi')
+        );
     }
 
     /**
@@ -39,12 +75,16 @@ class PendapatanCacheHelper
      */
     public static function getTotalTransaksiAll(): int
     {
-        $key = self::$baseKey . '_total_transaksi_all';
-        return (int) Cache::remember($key, self::$ttl, fn() => PendapatanPasar::count());
+        return (int) Cache::remember(
+            self::vKey('total_transaksi_all'),
+            self::$ttl,
+            fn () => PendapatanPasar::count()
+        );
     }
 
     /**
-     * Ambil statistik ringkasan kartu berdasarkan filter (cached progresif)
+     * Ambil statistik ringkasan kartu berdasarkan filter (cached progresif).
+     * Cache key unik per kombinasi parameter filter.
      */
     public static function getFilteredSummary(
         string $timeframe = 'bulan',
@@ -55,9 +95,8 @@ class PendapatanCacheHelper
         $endDate = null
     ): array {
         $tahun = $tahun ?: (int) date('Y');
-        $cacheKey = sprintf(
-            '%s_summary_%s_%s_%s_%s_%s_%s',
-            self::$baseKey,
+        $suffix = sprintf(
+            'summary_%s_%s_%s_%s_%s_%s',
             $timeframe,
             $pasarId ?: 'all',
             $tahun ?: 'all',
@@ -66,9 +105,7 @@ class PendapatanCacheHelper
             $endDate ?: 'none'
         );
 
-        self::trackCacheKey($cacheKey);
-
-        return Cache::remember($cacheKey, self::$ttl, function () use ($timeframe, $pasarId, $tahun, $bulan, $startDate, $endDate) {
+        return Cache::remember(self::vKey($suffix), self::$ttl, function () use ($timeframe, $pasarId, $tahun, $bulan, $startDate, $endDate) {
             $query = PendapatanPasar::query();
 
             if (!empty($pasarId)) {
@@ -100,9 +137,11 @@ class PendapatanCacheHelper
             $totalTransaksi = (int) $query->count();
 
             // Rekap per pasar pada filter aktif
-            $pasarStatsQuery = (clone $query)->selectRaw('pasar_id, COUNT(*) as transaksi_count, SUM(jumlah_retribusi) as total_nominal')
-                ->groupBy('pasar_id');
-            $pasarStats = $pasarStatsQuery->get()->keyBy('pasar_id');
+            $pasarStats = (clone $query)
+                ->selectRaw('pasar_id, COUNT(*) as transaksi_count, SUM(jumlah_retribusi) as total_nominal')
+                ->groupBy('pasar_id')
+                ->get()
+                ->keyBy('pasar_id');
 
             return [
                 'total_retribusi' => $totalRetribusi,
@@ -117,8 +156,7 @@ class PendapatanCacheHelper
      */
     public static function getRingkasanPerPasar()
     {
-        $key = self::$baseKey . '_ringkasan_per_pasar';
-        return Cache::remember($key, self::$ttl, function () {
+        return Cache::remember(self::vKey('ringkasan_per_pasar'), self::$ttl, function () {
             return Pasar::select('id', 'nama_pasar', 'kecamatan', 'kelurahan', 'status_pasar')
                 ->withCount('pendapatanPasars')
                 ->withSum('pendapatanPasars', 'jumlah_retribusi')
@@ -132,8 +170,7 @@ class PendapatanCacheHelper
      */
     public static function getTahunList(): array
     {
-        $key = self::$baseKey . '_tahun_list';
-        return Cache::remember($key, self::$ttl, function () {
+        return Cache::remember(self::vKey('tahun_list'), self::$ttl, function () {
             $list = PendapatanPasar::selectRaw('DISTINCT tahun_retribusi AS th')
                 ->orderByDesc('th')
                 ->pluck('th')
@@ -141,12 +178,13 @@ class PendapatanCacheHelper
                 ->values()
                 ->all();
 
-            return empty($list) ? [(int)date('Y')] : $list;
+            return empty($list) ? [(int) date('Y')] : $list;
         });
     }
 
     /**
-     * Ambil data time-series chart garis untuk Dashboard (progresif cached dengan dynamic key tracking)
+     * Ambil data time-series chart garis untuk Dashboard (cached progresif).
+     * Cache key unik per kombinasi parameter filter.
      *
      * @param string $timeframe 'tahun' | 'bulan' | 'hari' | 'periode'
      * @param string|int|null $pasarId
@@ -164,9 +202,8 @@ class PendapatanCacheHelper
         $endDate = null
     ): array {
         $tahun = $tahun ?: (int) date('Y');
-        $cacheKey = sprintf(
-            '%s_chart_%s_%s_%s_%s_%s_%s',
-            self::$baseKey,
+        $suffix = sprintf(
+            'chart_%s_%s_%s_%s_%s_%s',
             $timeframe,
             $pasarId ?: 'all',
             $tahun ?: 'all',
@@ -175,9 +212,7 @@ class PendapatanCacheHelper
             $endDate ?: 'none'
         );
 
-        self::trackCacheKey($cacheKey);
-
-        return Cache::remember($cacheKey, self::$ttl, function () use ($timeframe, $pasarId, $tahun, $bulan, $startDate, $endDate) {
+        return Cache::remember(self::vKey($suffix), self::$ttl, function () use ($timeframe, $pasarId, $tahun, $bulan, $startDate, $endDate) {
             $query = PendapatanPasar::query();
 
             if (!empty($pasarId)) {
@@ -196,7 +231,7 @@ class PendapatanCacheHelper
                     ->orderBy('tahun_retribusi');
 
                 $results = $query->pluck('total', 'period')->all();
-                
+
                 $minYear = !empty($results) ? min(array_keys($results)) : ($tahun - 4);
                 $maxYear = !empty($results) ? max(array_keys($results)) : $tahun;
                 if ($maxYear - $minYear < 4) {
@@ -220,7 +255,7 @@ class PendapatanCacheHelper
                 $namaBulan = [
                     1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
                     5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
-                    9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                    9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
                 ];
 
                 for ($m = 1; $m <= 12; $m++) {
@@ -278,53 +313,26 @@ class PendapatanCacheHelper
 
             return [
                 'labels' => $labels,
-                'data' => $data,
-                'total' => $totalNominal,
-                'max' => !empty($data) ? max($data) : 0,
-                'avg' => count($data) > 0 ? ($totalNominal / count($data)) : 0,
+                'data'   => $data,
+                'total'  => $totalNominal,
+                'max'    => !empty($data) ? max($data) : 0,
+                'avg'    => count($data) > 0 ? ($totalNominal / count($data)) : 0,
             ];
         });
     }
 
     /**
-     * Invalidate & refresh semua cache pendapatan
+     * Invalidate semua cache pendapatan lalu pre-warm entry global.
+     * Invalidasi bersifat O(1) — cukup increment version key.
      */
     public static function refreshAll(): void
     {
-        Cache::forget(self::$baseKey . '_last_updated');
-        Cache::forget(self::$baseKey . '_total_nominal_all');
-        Cache::forget(self::$baseKey . '_total_transaksi_all');
-        Cache::forget(self::$baseKey . '_ringkasan_per_pasar');
-        Cache::forget(self::$baseKey . '_tahun_list');
+        self::invalidate();
 
-        // Hapus seluruh dynamic query chart & filter yang tercatat
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $trackedKeys = Cache::get($trackerKey, []);
-
-        foreach ($trackedKeys as $k) {
-            Cache::forget($k);
-        }
-
-        Cache::forget($trackerKey);
-
-        // Pre-warm global dasar
+        // Pre-warm entry yang paling sering diakses
         self::getTotalNominalAll();
         self::getTotalTransaksiAll();
         self::getRingkasanPerPasar();
         self::getTahunList();
-    }
-
-    /**
-     * Catat key cache dinamis
-     */
-    public static function trackCacheKey(string $key): void
-    {
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $tracked = Cache::get($trackerKey, []);
-
-        if (!in_array($key, $tracked)) {
-            $tracked[] = $key;
-            Cache::put($trackerKey, $tracked, self::$ttl);
-        }
     }
 }

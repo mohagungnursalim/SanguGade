@@ -104,7 +104,10 @@ class DashboardCacheAndChartTest extends TestCase
     {
         $totalInitial = PasarsCacheHelper::getTotalPasar();
         $this->assertEquals(2, $totalInitial);
-        $this->assertTrue(Cache::has('cache_pasars_total'));
+
+        // Versioned key harus ada di cache (format: cache_pasars:v{n}:total)
+        $version = Cache::get('cache_pasars_version', 1);
+        $this->assertTrue(Cache::has("cache_pasars:v{$version}:total"));
 
         // Tambah pasar baru
         Pasar::create([
@@ -113,11 +116,45 @@ class DashboardCacheAndChartTest extends TestCase
             'kelurahan'  => 'Citerep',
         ]);
 
-        // Refresh / Invalidate cache
+        // Refresh / Invalidate cache — versi harus naik
         PasarsCacheHelper::refreshAll();
 
         $totalAfter = PasarsCacheHelper::getTotalPasar();
         $this->assertEquals(3, $totalAfter);
+    }
+
+    public function test_cache_helpers_prevent_race_condition_and_handle_concurrent_fetches(): void
+    {
+        // Pembacaan berulang harus mengembalikan nilai identik (dari cache)
+        $val1 = PasarsCacheHelper::getTotalPasar();
+        $val2 = PasarsCacheHelper::getTotalPasar();
+        $this->assertEquals($val1, $val2);
+
+        // ── PasarsCacheHelper: versioned invalidation ────────────────────────
+        // Panggil getTotalPasar agar version key terbentuk di cache
+        PasarsCacheHelper::getTotalPasar();
+        // Lakukan invalidate awal agar version key tersimpan secara eksplisit
+        PasarsCacheHelper::invalidate();
+        $vBefore = Cache::get('cache_pasars_version');
+
+        PasarsCacheHelper::refreshAll();
+
+        $vAfter = Cache::get('cache_pasars_version');
+        $this->assertGreaterThan($vBefore, $vAfter, 'PasarsCacheHelper: version key harus naik setelah refreshAll()');
+
+        // Key versi lama tidak boleh lagi diakses (kunci baru otomatis muncul via pre-warm)
+        $versionedKeyOld = "cache_pasars:v{$vBefore}:total";
+        $this->assertFalse(Cache::has($versionedKeyOld), 'Key versi lama harus tidak terjangkau');
+
+        // ── PendapatanCacheHelper: versioned invalidation ────────────────────
+        PendapatanCacheHelper::getTotalNominalAll();
+        PendapatanCacheHelper::invalidate();
+        $vPendBefore = Cache::get('cache_pendapatan_version');
+
+        PendapatanCacheHelper::refreshAll();
+
+        $vPendAfter = Cache::get('cache_pendapatan_version');
+        $this->assertGreaterThan($vPendBefore, $vPendAfter, 'PendapatanCacheHelper: version key harus naik setelah refreshAll()');
     }
 
     public function test_pendapatan_cache_helper_chart_data(): void
