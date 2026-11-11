@@ -3,11 +3,14 @@
 use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\CkeditorController;
 use App\Livewire\Dashboard\Categories;
+use App\Livewire\Dashboard\Dashboard;
 use App\Livewire\Dashboard\PermissionIndex;
+use App\Livewire\Dashboard\PendapatanPasarIndex;
 use App\Livewire\Dashboard\Posts;
 use App\Livewire\Dashboard\PostsCreate;
 use App\Livewire\Dashboard\PostsEdit;
 use App\Livewire\Dashboard\RoleIndex;
+use App\Livewire\Dashboard\SaranaPrasarana;
 use App\Livewire\Dashboard\Tags;
 use App\Livewire\Dashboard\UserIndex;
 use Illuminate\Http\Request;
@@ -31,7 +34,7 @@ Route::post('/logout', function () {
 
 
 // =========== Dashboard Page ==========
-Route::view('dashboard', 'livewire.dashboard.dashboard')
+Route::get('dashboard', Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -85,8 +88,12 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
     Route::get('/posts/{slug}/edit', PostsEdit::class)->name('posts.edit');
 
     // ========= Tags & Categories ==========
-    Route::get('/tags', Tags::class)->name('tags');   
+    Route::get('/tags', Tags::class)->name('tags');
     Route::get('/categories', Categories::class)->name('categories');
+
+    // ========= Sarana Prasarana & Pendapatan Pasar ==========
+    Route::get('/sarana-prasarana', SaranaPrasarana::class)->name('sarana-prasarana');
+    Route::get('/pendapatan-pasar', PendapatanPasarIndex::class)->name('pendapatan-pasar');
 
        /**
          * ROLE MANAGEMENT

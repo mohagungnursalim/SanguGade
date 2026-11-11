@@ -11,8 +11,9 @@
                  <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
              </div>
              <li>
-                 <a href="#"
-                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                 <a wire:navigate href="{{ route('dashboard') }}"
+                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group
+                     {{ request()->routeIs('dashboard') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
                      <i class="fa-solid fa-chart-line"></i>
                      <span class="ms-3">Dashboard</span>
                  </a>
@@ -40,7 +41,27 @@
                   </button>
 
                  <ul id="dropdown-pasar"
-                     class="text-sm hidden py-2 space-y-2">
+                     class="text-sm {{ request()->routeIs(['dashboard.sarana-prasarana', 'dashboard.pendapatan-pasar']) ? '' : 'hidden' }} py-2 space-y-2">
+                     <li>
+                         <a wire:navigate href="{{ route('dashboard.sarana-prasarana') }}"
+                             class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
+                            text-gray-900 dark:text-white
+                            hover:bg-gray-100 dark:hover:bg-gray-700
+                            {{ request()->routeIs('dashboard.sarana-prasarana') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
+                             <i class="fa-solid fa-arrow-right"></i>
+                             <span class="ml-2">Sarana Prasarana</span>
+                         </a>
+                     </li>
+                     <li>
+                         <a wire:navigate href="{{ route('dashboard.pendapatan-pasar') }}"
+                             class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
+                            text-gray-900 dark:text-white
+                            hover:bg-gray-100 dark:hover:bg-gray-700
+                            {{ request()->routeIs('dashboard.pendapatan-pasar') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
+                             <i class="fa-solid fa-arrow-right"></i>
+                             <span class="ml-2">Pendapatan Pasar</span>
+                         </a>
+                     </li>
                      <li>
                          <a wire:navigate href=""
                              class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
@@ -50,25 +71,7 @@
                              <span class="ml-2">Bapokting</span>
                          </a>
                      </li>
-                     <li>
-                         <a wire:navigate href=""
-                             class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
-                            text-gray-900 dark:text-white
-                            hover:bg-gray-100 dark:hover:bg-gray-700">
-                             <i class="fa-solid fa-arrow-right"></i>
-                             <span class="ml-2">Sarana Prasarana</span>
-                         </a>
-                     </li>
 
-                     <li>
-                         <a wire:navigate href=""
-                             class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
-                            text-gray-900 dark:text-white
-                            hover:bg-gray-100 dark:hover:bg-gray-700">
-                             <i class="fa-solid fa-arrow-right"></i>
-                             <span class="ml-2">Data Pedagang</span>
-                         </a>
-                     </li>
                  </ul>
              </li>
 

@@ -13,8 +13,10 @@
                         </path>
                     </svg>
                 </button>
-                <a href="https://flowbite.com" class="flex ms-2 md:me-24">
-                    {{-- <img src="https://flowbite.com/docs/images/logo.svg" class="h-8 me-3" alt="FlowBite Logo" /> --}}
+                <a href="/dashboard" class="flex items-center gap-2 ms-2 md:me-24">
+                    {{-- Logo --}}
+                    <img src="{{ asset('img/KotaPalu.png') }}" alt="Logo Kota Palu"
+                        class="h-8 w-auto sm:h-10">
                     <span
                         class="self-center text-green-600 text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-green-500">SanguGade</span>
                 </a>
