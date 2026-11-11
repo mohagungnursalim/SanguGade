@@ -10,54 +10,56 @@ class CategoriesCacheHelper
     protected static $ttl = 60 * 60 * 24 * 7; // 1 minggu
     protected static $baseKey = 'cache_categories';
 
+    // ── Versioned Key ────────────────────────────────────────────────────────
+
+    /**
+     * Baca versi cache saat ini. Default ke 1 jika belum pernah diset.
+     */
+    protected static function version(): int
+    {
+        return (int) Cache::get(self::$baseKey . '_version', 1);
+    }
+
+    /**
+     * Bentuk cache key yang sudah mengandung versi aktif.
+     * Ketika versi naik, semua derived key otomatis menjadi stale
+     * tanpa perlu menghapus satu per satu (invalidasi O(1)).
+     */
+    public static function vKey(string $suffix): string
+    {
+        return self::$baseKey . ':v' . self::version() . ':' . $suffix;
+    }
+
+    /**
+     * Invalidasi seluruh cache kategori dengan menaikkan nomor versi.
+     * Cache::add menjamin key terseed ke 1 sebelum increment,
+     * sehingga versi selalu meningkat dari nilai yang sudah tersimpan.
+     */
+    public static function invalidate(): void
+    {
+        Cache::add(self::$baseKey . '_version', 1, self::$ttl);
+        Cache::increment(self::$baseKey . '_version');
+    }
+
+    // ── Public Methods ───────────────────────────────────────────────────────
+
     /**
      * Ambil total semua kategori (cached)
      */
     public static function getTotalCategories()
     {
-        $key = self::$baseKey . '_total';
-        return Cache::remember($key, self::$ttl, fn() => Category::count());
+        return Cache::remember(self::vKey('total'), self::$ttl, fn () => Category::count());
     }
 
     /**
-     * Refresh semua cache kategori
+     * Invalidate semua cache kategori lalu pre-warm entry dasar.
+     * Invalidasi bersifat O(1) — cukup increment version key.
      */
-    public static function refreshAll()
+    public static function refreshAll(): void
     {
-        $key = self::$baseKey . '_total';
-        Cache::forget($key);
-        Cache::put($key, Category::count(), self::$ttl);
+        self::invalidate();
 
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $trackedKeys = Cache::get($trackerKey, []);
-
-        foreach ($trackedKeys as $k) {
-            Cache::forget($k);
-        }
-
-        Cache::forget($trackerKey);
-    }
-
-    /**
-     * Track key cache yang digunakan
-     */
-    public static function trackCacheKey($key)
-    {
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        $tracked = Cache::get($trackerKey, []);
-
-        if (!in_array($key, $tracked)) {
-            $tracked[] = $key;
-            Cache::put($trackerKey, $tracked, self::$ttl);
-        }
-    }
-
-    /**
-     * Ambil daftar tracked keys
-     */
-    public static function getTrackedKeys()
-    {
-        $trackerKey = self::$baseKey . '_tracked_keys';
-        return Cache::get($trackerKey, []);
+        // Pre-warm entry yang paling sering diakses
+        self::getTotalCategories();
     }
 }

@@ -6,8 +6,8 @@ use Livewire\Component;
 use App\Models\Tag;
 use App\Helpers\TagsCacheHelper;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Url;
-use Illuminate\Support\Facades\DB;
 
 class Tags extends Component
 {
@@ -15,11 +15,10 @@ class Tags extends Component
     public $editId, $editName, $showEditModal;
     public $deleteId, $deleteName, $showDeleteModal;
     public $tags = [], $totalTags;
-    public $cacheKey = 'cache_tags';
-    
+
     #[Url()]
     public $search;
-    
+
     public $limit = 5;
     public $loaded = false;
     public $ttl = 60 * 60 * 24 * 7; // 1 minggu
@@ -27,13 +26,13 @@ class Tags extends Component
 
     public function mount()
     {
-        // Ambil total tags dari helper
+        // Ambil total tags dari helper (cached, versioned)
         $this->totalTags = TagsCacheHelper::getTotalTags();
 
-        // Gunakan cache jika tersedia
-        $key = "{$this->cacheKey}_" . md5($this->search) . "_{$this->limit}";
-        if (cache()->has($key)) {
-            $this->tags = cache()->get($key);
+        // Cek apakah daftar tags sudah ada di cache (versioned key)
+        $key = TagsCacheHelper::vKey('list_' . md5((string) $this->search) . '_' . $this->limit);
+        if (Cache::has($key)) {
+            $this->tags   = Cache::get($key);
             $this->loaded = true;
         }
     }
@@ -53,11 +52,10 @@ class Tags extends Component
 
     public function loadInitialTags()
     {
-        $key = "{$this->cacheKey}_" . md5($this->search) . "_{$this->limit}";
-        
-        TagsCacheHelper::trackCacheKey($key);
+        // Versioned key — otomatis stale setelah refreshAll() / invalidate()
+        $key = TagsCacheHelper::vKey('list_' . md5((string) $this->search) . '_' . $this->limit);
 
-        $this->tags = cache()->remember($key, $this->ttl, function () {
+        $this->tags = Cache::remember($key, $this->ttl, function () {
             return Tag::where('name', 'like', '%' . $this->search . '%')
                 ->latest()
                 ->take($this->limit)
@@ -86,7 +84,9 @@ class Tags extends Component
             'slug' => Str::slug($this->name),
         ]);
 
+        // Invalidasi cache (versioned — O(1)) lalu reload
         TagsCacheHelper::refreshAll();
+        $this->totalTags = TagsCacheHelper::getTotalTags();
         $this->loadInitialTags();
 
         $this->reset(['name', 'showModalAdd']);
@@ -99,7 +99,7 @@ class Tags extends Component
     public function edit($id)
     {
         $tag = Tag::findOrFail($id);
-        $this->editId = $tag->id;
+        $this->editId   = $tag->id;
         $this->editName = $tag->name;
         $this->showEditModal = true;
     }
@@ -117,9 +117,11 @@ class Tags extends Component
             'slug' => Str::slug($this->editName),
         ]);
 
+        // Invalidasi cache (versioned — O(1)) lalu reload
         TagsCacheHelper::refreshAll();
+        $this->totalTags = TagsCacheHelper::getTotalTags();
         $this->loadInitialTags();
-        
+
         $this->reset(['editId', 'editName', 'showEditModal']);
         $this->dispatch('updateSuccess', [
             'message' => 'Tag successfully updated.',
@@ -130,7 +132,7 @@ class Tags extends Component
     public function confirmDelete($id)
     {
         $tag = Tag::findOrFail($id);
-        $this->deleteId = $tag->id;
+        $this->deleteId   = $tag->id;
         $this->deleteName = $tag->name;
         $this->showDeleteModal = true;
     }
@@ -141,7 +143,9 @@ class Tags extends Component
         $tag = Tag::findOrFail($this->deleteId);
         $tag->delete();
 
+        // Invalidasi cache (versioned — O(1)) lalu reload
         TagsCacheHelper::refreshAll();
+        $this->totalTags = TagsCacheHelper::getTotalTags();
         $this->loadInitialTags();
 
         $this->reset(['deleteId', 'deleteName', 'showDeleteModal']);

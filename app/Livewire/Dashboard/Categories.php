@@ -25,7 +25,6 @@ class Categories extends Component
     public $showDeleteModal;
 
     public $categories = [], $totalCategories;
-    public $cacheKey = 'cache_categories';
 
     #[Url()]
     public $search;
@@ -37,11 +36,11 @@ class Categories extends Component
 
     public function mount()
     {
-        // Ambil total kategori dari helper (cached)
+        // Ambil total kategori dari helper (cached, versioned)
         $this->totalCategories = CategoriesCacheHelper::getTotalCategories();
 
-        // Cek apakah daftar kategori sudah ada di cache
-        $key = "{$this->cacheKey}_" . md5($this->search) . "_{$this->limit}";
+        // Cek apakah daftar kategori sudah ada di cache (versioned key)
+        $key = CategoriesCacheHelper::vKey('list_' . md5((string) $this->search) . '_' . $this->limit);
         if (Cache::has($key)) {
             $this->categories = Cache::get($key);
             $this->loaded = true;
@@ -63,8 +62,8 @@ class Categories extends Component
 
     public function loadInitialCategories()
     {
-        $key = "{$this->cacheKey}_" . md5($this->search) . "_{$this->limit}";
-        CategoriesCacheHelper::trackCacheKey($key);
+        // Versioned key — otomatis stale setelah refreshAll() / invalidate()
+        $key = CategoriesCacheHelper::vKey('list_' . md5((string) $this->search) . '_' . $this->limit);
 
         $this->categories = Cache::remember($key, $this->ttl, function () {
             return Category::where('name', 'like', '%' . $this->search . '%')
@@ -87,22 +86,23 @@ class Categories extends Component
     public function store()
     {
         $this->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name'  => 'required|string|max:255|unique:categories,name',
             'color' => 'nullable|string|max:7',
             'image' => 'nullable|image|max:2048',
         ]);
 
         Category::create([
-            'name' => $this->name,
-            'slug' => Str::slug($this->name),
+            'name'  => $this->name,
+            'slug'  => Str::slug($this->name),
             'color' => $this->color,
             'image' => $this->image
                 ? Storage::disk('public')->putFile('categories', $this->image)
                 : null,
         ]);
 
-        // Refresh cache & reload data
+        // Invalidasi cache (versioned — O(1)) lalu reload
         CategoriesCacheHelper::refreshAll();
+        $this->totalCategories = CategoriesCacheHelper::getTotalCategories();
         $this->loadInitialCategories();
 
         $this->reset(['name', 'color', 'image', 'showModalAdd']);
@@ -122,10 +122,10 @@ class Categories extends Component
     {
         $category = Category::findOrFail($id);
 
-        $this->editId = $category->id;
-        $this->editName = $category->name;
-        $this->editColor = $category->color;
-        $this->editImage = null;
+        $this->editId        = $category->id;
+        $this->editName      = $category->name;
+        $this->editColor     = $category->color;
+        $this->editImage     = null;
         $this->editImagePath = $category->image;
 
         $this->showEditModal = true;
@@ -135,12 +135,12 @@ class Categories extends Component
     public function update()
     {
         $this->validate([
-            'editName' => 'required|string|max:255|unique:categories,name,' . $this->editId,
+            'editName'  => 'required|string|max:255|unique:categories,name,' . $this->editId,
             'editColor' => 'nullable|string|max:7',
             'editImage' => 'nullable|image|max:2048',
         ]);
 
-        $category = Category::findOrFail($this->editId);
+        $category  = Category::findOrFail($this->editId);
         $imagePath = $category->image;
 
         if ($this->editImage) {
@@ -151,14 +151,15 @@ class Categories extends Component
         }
 
         $category->update([
-            'name' => $this->editName,
-            'slug' => Str::slug($this->editName),
+            'name'  => $this->editName,
+            'slug'  => Str::slug($this->editName),
             'color' => $this->editColor,
             'image' => $imagePath,
         ]);
 
-        // Refresh cache & reload data
+        // Invalidasi cache (versioned — O(1)) lalu reload
         CategoriesCacheHelper::refreshAll();
+        $this->totalCategories = CategoriesCacheHelper::getTotalCategories();
         $this->loadInitialCategories();
 
         $this->reset(['editId', 'editName', 'editColor', 'editImage', 'showEditModal']);
@@ -177,7 +178,7 @@ class Categories extends Component
     public function confirmDelete($id)
     {
         $category = Category::findOrFail($id);
-        $this->deleteId = $category->id;
+        $this->deleteId   = $category->id;
         $this->deleteName = $category->name;
         $this->showDeleteModal = true;
     }
@@ -193,8 +194,9 @@ class Categories extends Component
 
         $category->delete();
 
-        // Refresh cache & reload data
+        // Invalidasi cache (versioned — O(1)) lalu reload
         CategoriesCacheHelper::refreshAll();
+        $this->totalCategories = CategoriesCacheHelper::getTotalCategories();
         $this->loadInitialCategories();
 
         $this->reset(['deleteId', 'deleteName', 'showDeleteModal']);
