@@ -19,7 +19,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 // ========== Frontend ==========
-Route::view('/', 'welcome');
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
 // ========= End Frontend ==========
 
 // ======== Logout Route ==========
