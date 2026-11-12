@@ -551,9 +551,11 @@
                                 </label>
                                 <input
                                     wire:model.defer="no_rekening_bank"
-                                    type="text"
-                                    placeholder="Contoh: 001.01.000123.4 (Bank Btn)"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                                    type="text" value="2501300007827"
+                                    placeholder="2501300007827"
+                                    disabled class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-200 disabled:text-gray-500
+                                            disabled:cursor-not-allowed
+                                            dark:disabled:bg-gray-600 dark:disabled:text-gray-400"
                                 />
                                 @error('no_rekening_bank') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
@@ -616,11 +618,17 @@
                                     Nomor Ayat Rekening
                                 </label>
                                 <input
-                                    wire:model.defer="nomor_ayat"
-                                    type="text"
-                                    placeholder="Contoh: 4.1.2.01.01"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                                />
+                                        wire:model.defer="nomor_ayat"
+                                        type="text"
+                                        placeholder="01.02.2002"
+                                        disabled
+                                        class="w-full px-3 py-2 text-xs border border-gray-300
+                                            dark:border-gray-600 rounded-lg
+                                            bg-white dark:bg-gray-700
+                                            text-gray-900 dark:text-white
+                                            disabled:bg-gray-200 disabled:text-gray-500
+                                            disabled:cursor-not-allowed
+                                            dark:disabled:bg-gray-600 dark:disabled:text-gray-400">
                                 @error('nomor_ayat') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
 
