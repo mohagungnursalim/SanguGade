@@ -743,15 +743,22 @@
                             {{-- Keterangan --}}
                             <div class="sm:col-span-3">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Keterangan Tambahan (Opsional)
+                                    Keterangan Tambahan
                                 </label>
-                                <input
+
+                                <select
                                     wire:model.defer="keterangan"
-                                    type="text"
-                                    placeholder="Catatan / keterangan penyetoran"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                                />
-                                @error('keterangan') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
+                                    <option value="">--Pilih Keterangan--</option>
+                                    <option value="Ret. Harian">Ret. Harian</option>
+                                    <option value="Ret. Sewa Tempat Kios">Ret. Sewa Tempat Kios</option>
+                                    <option value="Ret. Sewat Tempat Lapak">Ret. Sewa Tempat Lapak</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+
+                                @error('keterangan')
+                                    <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -997,16 +1004,24 @@
                                 @error('edit_petugas_bank') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <div class="sm:col-span-3">
+                           <div class="sm:col-span-3">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Keterangan Tambahan
                                 </label>
-                                <input
+
+                                <select
                                     wire:model.defer="edit_keterangan"
-                                    type="text"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500"
-                                />
-                                @error('edit_keterangan') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                    <option value="">--Pilih Keterangan--</option>
+                                    <option value="Ret. Harian">Ret. Harian</option>
+                                    <option value="Ret. Sewa Tempat Kios">Ret. Sewa Tempat Kios</option>
+                                    <option value="Ret. Sewat Tempat Lapak">Ret. Sewat Tempat Lapak</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+
+                                @error('edit_keterangan')
+                                    <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
