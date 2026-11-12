@@ -5,7 +5,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+
+        <meta name="theme-color" content="#0f172a">
+
+        <meta name="mobile-web-app-capable" content="yes">
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+        <meta name="apple-mobile-web-app-title" content="Sangu Gade">
+
+        <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+
+        <title>{{ config('app.name', 'Sangu Gade') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -32,5 +46,21 @@
                 {{ $slot }}
             </main>
         </div>
+
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('PWA Service Worker aktif:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('PWA Service Worker gagal:', error);
+                    });
+            });
+        }
+    </script>
+
     </body>
 </html>
