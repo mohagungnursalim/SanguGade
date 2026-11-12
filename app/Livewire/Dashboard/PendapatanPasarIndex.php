@@ -147,7 +147,7 @@ class PendapatanPasarIndex extends Component
             'tanggal_penyetoran' => 'required|date',
             'nama_penyetor'      => 'required|string|max:150',
             'petugas_bank'       => 'nullable|string|max:150',
-            'keterangan'         => 'nullable|string|max:500',
+            'keterangan'         => 'required|string|max:500',
         ];
     }
 
@@ -167,7 +167,7 @@ class PendapatanPasarIndex extends Component
             'edit_tanggal_penyetoran'=> 'required|date',
             'edit_nama_penyetor'     => 'required|string|max:150',
             'edit_petugas_bank'      => 'nullable|string|max:150',
-            'edit_keterangan'        => 'nullable|string|max:500',
+            'edit_keterangan'        => 'required|string|max:500',
         ];
     }
 
