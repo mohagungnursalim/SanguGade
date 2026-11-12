@@ -394,17 +394,17 @@
                                     {{-- Tombol Detail Quick View --}}
                                     <button
                                         type="button"
-                                        @click="viewDetail({{ $item->toJson() }})"
+                                        @click="viewDetail(@js($item))"
                                         class="inline-flex items-center justify-center w-7 h-7 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 transition"
                                         title="Detail Formulir SSRD"
                                     >
                                         <i class="fas fa-file-lines text-xs"></i>
                                     </button>
 
-                                    {{-- Tombol Edit (murni Alpine.js) --}}
+                                    {{-- Tombol Edit --}}
                                     <button
                                         type="button"
-                                        @click="openEditModal({{ $item->toJson() }})"
+                                        @click="openEditModal(@js($item))"
                                         class="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 transition"
                                         title="Edit Data SSRD"
                                     >
