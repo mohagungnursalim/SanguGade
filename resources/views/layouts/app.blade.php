@@ -17,7 +17,7 @@
 
         <meta name="apple-mobile-web-app-title" content="Sangu Gade">
 
-        <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('icons/launchericon-192x192.png') }}">
 
         <title>{{ config('app.name', 'Sangu Gade') }}</title>
 
