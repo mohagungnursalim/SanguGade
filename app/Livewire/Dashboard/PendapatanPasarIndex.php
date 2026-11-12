@@ -45,12 +45,12 @@ class PendapatanPasarIndex extends Component
     // ─── State Form Create ────────────────────────────────────────────────
     public ?int $pasar_id = null;
     public ?int $tahun_ssrd = null;
-    public string $no_rekening_bank = '';
+    public string $no_rekening_bank = '2501300007827';
     public string $masa_retribusi = '';
     public ?int $tahun_retribusi = null;
     public string $nomor_urut_ssrd = '';
     public string $jenis_retribusi = 'SKRD';
-    public string $nomor_ayat = '';
+    public string $nomor_ayat = '01.02.2002';
     public $jumlah_retribusi = 0;
     public string $terbilang = '';
     public string $tanggal_penyetoran = '';
@@ -62,12 +62,12 @@ class PendapatanPasarIndex extends Component
     public ?int $editId = null;
     public ?int $edit_pasar_id = null;
     public ?int $edit_tahun_ssrd = null;
-    public string $edit_no_rekening_bank = '';
+    public string $edit_no_rekening_bank = '2501300007827';
     public string $edit_masa_retribusi = '';
     public ?int $edit_tahun_retribusi = null;
     public string $edit_nomor_urut_ssrd = '';
     public string $edit_jenis_retribusi = 'SKRD';
-    public string $edit_nomor_ayat = '';
+    public string $edit_nomor_ayat = '01.02.2002';
     public $edit_jumlah_retribusi = 0;
     public string $edit_terbilang = '';
     public string $edit_tanggal_penyetoran = '';
