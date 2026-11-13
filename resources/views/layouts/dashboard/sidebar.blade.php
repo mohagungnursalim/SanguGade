@@ -130,6 +130,7 @@
 
 
 
+         @role('admin')
          <ul class="space-y-2 font-medium">
              <div class="flex items-center my-4">
                  <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
@@ -215,6 +216,7 @@
                  </ul>
              </li>
          </ul>
+         @endrole
 
      </div>
  </aside>
