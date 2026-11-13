@@ -6,14 +6,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f172a">
     <title>Offline - Sangu Gade</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .offline-container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #0f172a;
+            color: white;
+        }
+
+        .brand-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .brand-name {
+            font-size: 21px;
+            font-weight: 750;
+            letter-spacing: -0.6px;
+            color: #0f172a;
+        }
+
+        .illustration {
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            position: relative;
+        }
+
+        .illustration svg {
+            width: 92px;
+            height: 92px;
+            color: #94a3b8;
+            stroke-width: 1.3;
+        }
+
+        .status-icon {
+            position: absolute;
+            top: 12px;
+            right: 8px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #f8fafc;
+            border-radius: 50%;
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-icon svg {
+            width: 19px;
+            height: 19px;
+            stroke-width: 2;
+        }
+
+        .status-label {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            border: 1px solid #fde68a;
+            border-radius: 30px;
+            background: #fffbeb;
+            color: #b45309;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        h1 {
+            margin-bottom: 12px;
+            color: #0f172a;
+            font-size: 26px;
+            font-weight: 750;
+            letter-spacing: -0.8px;
+        }
+
+        .description {
+            max-width: 340px;
+            margin: 0 auto;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .retry-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            background: #0f172a;
+            color: white;
+            font-size: 14px;
+            font-weight: 650;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .retry-button:hover {
+            background: #1e293b;
+        }
+
+        .retry-button:active {
+            transform: scale(0.98);
+        }
+
+        .retry-button svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .footer {
+            margin-top: 48px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .brand {
+                margin-bottom: 40px;
+            }
+
+            .illustration {
+                width: 160px;
+                height: 160px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <main>
-        <h2>Kamu sedang offline</h2>
-        <p>Periksa koneksi internet dan coba kembali.</p>
-        <button onclick="location.reload()">
+    <main class="offline-container">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10h18M5 10l1.5-6h11L19 10"/>
+                    <path d="M5 10v10h14V10M9 20v-6h6v6"/>
+                </svg>
+            </div>
+            <span class="brand-name">Sangu Gade</span>
+        </div>
+
+        <div class="illustration">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="14" rx="2"/>
+                <path d="M8 22h8M12 18v4"/>
+                <path d="m9 9 6 6m0-6-6 6"/>
+            </svg>
+
+            <div class="status-icon">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M12 8v4m0 4h.01"/>
+                    <path d="m10.3 3.86-7.48 13a2 2 0 0 0 1.74 3h14.88a2 2 0 0 0 1.74-3l-7.48-13a2 2 0 0 0-3.4 0Z"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="status-label">
+            Tidak ada koneksi
+        </div>
+
+        <h1>Kamu sedang offline</h1>
+
+        <p class="description">
+            Sepertinya koneksi internet kamu sedang terputus.
+            Periksa jaringan internet dan coba muat ulang halaman ini.
+        </p>
+
+        <button class="retry-button" onclick="location.reload()">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 7v5h-5M4 17v-5h5"/>
+                <path d="M5.6 9a7 7 0 0 1 11.9-2L20 12M4 12l2.5 5a7 7 0 0 0 11.9-2"/>
+            </svg>
             Coba Lagi
         </button>
+
+        <footer class="footer">
+            &copy; 2026 Sangu Gade. Semua hak dilindungi.
+        </footer>
+
     </main>
 </body>
 </html>
