@@ -68,14 +68,14 @@
                             text-gray-900 dark:text-white
                             hover:bg-gray-100 dark:hover:bg-gray-700">
                              <i class="fa-solid fa-arrow-right"></i>
-                             <span class="ml-2">Bapokting</span>
+                             <span class="ml-2">Data Pedagang</span>
                          </a>
                      </li>
 
                  </ul>
              </li>
 
-             <div class="flex items-center my-4">
+             {{-- <div class="flex items-center my-4">
                  <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
                  <span class="mx-3 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                      Konten
@@ -125,7 +125,7 @@
 
 
                  </ul>
-             </li>
+             </li> --}}
          </ul>
 
 
