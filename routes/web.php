@@ -48,7 +48,7 @@ Route::post('api/tags', [DataController::class, 'storeTag']); // ubah jadi store
 
 
 // ========= CkEditor Image Upload & Delete =========
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','role:admin'])->group(function () {
 
         // Upload gambar CKEditor
         Route::post('/ckeditor/upload', function (Request $request) {
@@ -85,32 +85,26 @@ Route::middleware(['auth'])->group(function () {
 // ============= Dashboard Prefix =============
 Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(function () {
     // ========== Posts ==========
-    Route::get('/posts', Posts::class)->name('posts.index');
-    Route::get('/posts/create', PostsCreate::class)->name('posts.create');
-    Route::get('/posts/{slug}/edit', PostsEdit::class)->name('posts.edit');
+    // Route::get('/posts', Posts::class)->name('posts.index');
+    // Route::get('/posts/create', PostsCreate::class)->name('posts.create');
+    // Route::get('/posts/{slug}/edit', PostsEdit::class)->name('posts.edit');
 
     // ========= Tags & Categories ==========
-    Route::get('/tags', Tags::class)->name('tags');
-    Route::get('/categories', Categories::class)->name('categories');
+    // Route::get('/tags', Tags::class)->name('tags');
+    // Route::get('/categories', Categories::class)->name('categories');
 
     // ========= Sarana Prasarana & Pendapatan Pasar ==========
     Route::get('/sarana-prasarana', SaranaPrasarana::class)->name('sarana-prasarana');
     Route::get('/pendapatan-pasar', PendapatanPasarIndex::class)->name('pendapatan-pasar');
 
-       /**
-         * ROLE MANAGEMENT
-         */
-        Route::get('/roles', RoleIndex::class)
-            ->name('roles.index');
-
         /**
-         * PERMISSION MANAGEMENT
+         * SETTINGS (Hanya bisa diakses oleh role admin)
          */
-        Route::get('/permissions', PermissionIndex::class)
-            ->name('permissions.index');
-
-        Route::get('/users', UserIndex::class)
-            ->name('users.index');
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/roles', RoleIndex::class)->name('roles.index');
+            Route::get('/permissions', PermissionIndex::class)->name('permissions.index');
+            Route::get('/users', UserIndex::class)->name('users.index');
+        });
 
 });
 

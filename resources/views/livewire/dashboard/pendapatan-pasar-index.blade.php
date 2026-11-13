@@ -1072,7 +1072,7 @@
                     <span class="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-semibold">Salinan Tanda Bukti Penyetoran</span>
                     <h3 class="text-base font-bold text-gray-900 dark:text-white">SURAT SETORAN RETRIBUSI DAERAH (SSRD)</h3>
                 </div>
-                <button type="button" @click="detailItem = null" class="text-gray-400 hover:text-white transition">
+                <button type="button" @click="detailItem = null" class="text-gray-600 hover:text-gray-400 transition">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
