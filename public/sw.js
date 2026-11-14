@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'sangu-gade-v2';
+const CACHE_NAME = 'sangu-gade-v3';
 const OFFLINE_URL = '/offline.html';
 
 // Install
