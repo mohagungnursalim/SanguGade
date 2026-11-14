@@ -18,7 +18,7 @@
                     <img src="{{ asset('img/KotaPalu.png') }}" alt="Logo Kota Palu"
                         class="h-8 w-auto sm:h-10">
                     <span
-                        class="self-center text-green-600 text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-green-500">SanguGade</span>
+                        class="self-center text-green-600 text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-green-500">Sangu Gade</span>
                 </a>
             </div>
             <div class="flex items-center" x-data="{ darkMode: localStorage.getItem('dark') === 'true' }"
