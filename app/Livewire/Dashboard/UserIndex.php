@@ -15,6 +15,7 @@ class UserIndex extends Component
 {
     public $roles = [];
 
+    // Form inputs
     public $userId = null;
     public $name = '';
     public $email = '';
@@ -22,10 +23,9 @@ class UserIndex extends Component
     public $role = '';
     public $pasar_id = null;
 
-    public $showModal = false;
-    public $showDeleteModal = false;
-    public $deleteId;
-    public $deleteName;
+    // Delete confirmation
+    public $deleteId = null;
+    public $deleteName = '';
 
     // Role yang diizinkan untuk dipilih di form User Management
     public static array $allowedRoles = ['opd', 'operator', 'bapokting'];
@@ -42,41 +42,27 @@ class UserIndex extends Component
     }
 
     protected $messages = [
+        'name.required' => 'Nama lengkap wajib diisi.',
+        'name.min' => 'Nama minimal 3 karakter.',
+        'email.required' => 'Alamat email wajib diisi.',
+        'email.email' => 'Format email tidak valid.',
+        'email.unique' => 'Email ini sudah terdaftar.',
+        'password.required' => 'Kata sandi wajib diisi untuk pengguna baru.',
+        'password.min' => 'Kata sandi minimal 6 karakter.',
+        'role.required' => 'Pilih peran (role) untuk pengguna.',
         'role.in' => 'Role yang dipilih harus Opd, Operator, atau Bapokting.',
-        'pasar_id.required' => 'Pilih pasar untuk menempatkan user ini.',
+        'pasar_id.required' => 'Pilih pasar untuk menempatkan pengguna ini.',
         'pasar_id.exists' => 'Pasar yang dipilih tidak valid.',
     ];
 
     public function mount()
     {
-        // Pastikan role-role yang diizinkan tersedia di database
+        // Pastikan role non-admin sudah ada di database
         foreach (self::$allowedRoles as $roleName) {
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
-        // Cache-friendly: Dropdown roles hanya Opd, Operator, Bapokting
         $this->roles = self::$allowedRoles;
-    }
-
-    public function create()
-    {
-        $this->resetForm();
-        $this->showModal = true;
-    }
-
-    public function edit(int $id)
-    {
-        $user = User::with('roles:id,name')->findOrFail($id);
-
-        $this->userId = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
-        $this->pasar_id = $user->pasar_id;
-
-        $userRole = $user->roles->first()?->name ?? '';
-        $this->role = in_array($userRole, self::$allowedRoles) ? $userRole : '';
-
-        $this->showModal = true;
     }
 
     public function save()
@@ -106,33 +92,32 @@ class UserIndex extends Component
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->resetForm();
-        $this->showModal = false;
-        session()->flash('success', 'User berhasil disimpan.');
-    }
-
-    public function confirmDelete(int $id)
-    {
-        $user = User::findOrFail($id);
-        $this->deleteId = $user->id;
-        $this->deleteName = $user->name;
-        $this->showDeleteModal = true;
+        $this->dispatch('user-saved');
+        $this->dispatch('notify', type: 'success', message: 'Data pengguna berhasil disimpan!');
     }
 
     public function delete()
     {
-        $user = User::findOrFail($this->deleteId);
-        $user->delete();
+        if ($this->deleteId) {
+            $user = User::find($this->deleteId);
 
-        // Invalidate cache users dan roles secara versioned O(1)
-        UsersCacheHelper::refreshAll();
-        RolesCacheHelper::refreshAll();
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+            // Larang menghapus admin jika ada
+            if ($user && !$user->hasRole('admin')) {
+                $user->delete();
 
-        $this->reset(['deleteId', 'deleteName', 'showDeleteModal']);
-        session()->flash('success', 'User berhasil dihapus.');
+                UsersCacheHelper::refreshAll();
+                RolesCacheHelper::refreshAll();
+                app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+                $this->dispatch('user-deleted');
+                $this->dispatch('notify', type: 'success', message: 'Pengguna berhasil dihapus!');
+            }
+        }
+
+        $this->reset(['deleteId', 'deleteName']);
     }
 
-    private function resetForm()
+    public function resetForm()
     {
         $this->reset(['userId', 'name', 'email', 'password', 'role', 'pasar_id']);
         $this->resetValidation();
@@ -140,7 +125,6 @@ class UserIndex extends Component
 
     public function render()
     {
-        // Data diambil dari Versioned Cache Helper dengan Eager Loading lengkap (Bebas N+1 & Duplikat)
         return view('livewire.dashboard.user-index', [
             'users' => UsersCacheHelper::getAllUsersWithRelations(),
             'pasars' => PasarsCacheHelper::getAllPasar(),

@@ -40,12 +40,16 @@ class UsersCacheHelper
     // ── Public Methods ───────────────────────────────────────────────────────
 
     /**
-     * Ambil semua users lengkap dengan eager load roles dan pasar (Mencegah N+1)
+     * Ambil users non-admin (OPD, Operator, Bapokting) lengkap dengan relasi (Mencegah N+1).
+     * Admin disembunyikan dari Users Management.
      */
     public static function getAllUsersWithRelations()
     {
-        return Cache::remember(self::vKey('all_with_relations'), self::$ttl, function () {
-            return User::with([
+        return Cache::remember(self::vKey('all_non_admin_with_relations'), self::$ttl, function () {
+            return User::whereDoesntHave('roles', function ($query) {
+                $query->where('name', 'admin');
+            })
+            ->with([
                 'roles:id,name',
                 'pasar:id,nama_pasar,kecamatan,kelurahan'
             ])
@@ -64,4 +68,3 @@ class UsersCacheHelper
         self::getAllUsersWithRelations();
     }
 }
-
