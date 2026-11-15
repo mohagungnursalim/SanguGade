@@ -58,5 +58,13 @@ class Pasar extends Model
     {
         return $this->hasMany(PendapatanPasar::class, 'pasar_id');
     }
+
+    /**
+     * Relasi ke data user yang dimounting ke pasar ini
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class, 'pasar_id');
+    }
 }
 
