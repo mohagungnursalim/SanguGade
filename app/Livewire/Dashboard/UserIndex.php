@@ -4,16 +4,16 @@ namespace App\Livewire\Dashboard;
 
 use Livewire\Component;
 use App\Models\User;
-use App\Models\Pasar;
 use App\Helpers\PasarsCacheHelper;
+use App\Helpers\RolesCacheHelper;
+use App\Helpers\UsersCacheHelper;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserIndex extends Component
 {
-    public $users;
-    public $roles;
-    public $pasars;
+    public $roles = [];
 
     public $userId = null;
     public $name = '';
@@ -49,29 +49,13 @@ class UserIndex extends Component
 
     public function mount()
     {
-        // Pastikan role-role yang diizinkan ada di tabel roles
+        // Pastikan role-role yang diizinkan tersedia di database
         foreach (self::$allowedRoles as $roleName) {
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
-        // Dropdown role hanya berisi Opd, Operator, Bapokting (Admin tidak dimunculkan)
-        $this->roles = Role::whereIn('name', self::$allowedRoles)
-            ->pluck('name')
-            ->toArray();
-
-        $this->loadPasars();
-        $this->loadUsers();
-    }
-
-    public function loadPasars()
-    {
-        $this->pasars = PasarsCacheHelper::getAllPasar();
-    }
-
-    public function loadUsers()
-    {
-        // Muat user beserta roles dan pasarnya
-        $this->users = User::with(['roles', 'pasar'])->get();
+        // Cache-friendly: Dropdown roles hanya Opd, Operator, Bapokting
+        $this->roles = self::$allowedRoles;
     }
 
     public function create()
@@ -82,7 +66,7 @@ class UserIndex extends Component
 
     public function edit(int $id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $user = User::with('roles:id,name')->findOrFail($id);
 
         $this->userId = $user->id;
         $this->name = $user->name;
@@ -90,7 +74,6 @@ class UserIndex extends Component
         $this->pasar_id = $user->pasar_id;
 
         $userRole = $user->roles->first()?->name ?? '';
-        // Jika user yang diedit bukan admin, isi field role
         $this->role = in_array($userRole, self::$allowedRoles) ? $userRole : '';
 
         $this->showModal = true;
@@ -117,8 +100,12 @@ class UserIndex extends Component
 
         $user->syncRoles([$this->role]);
 
+        // Invalidate cache users dan roles secara versioned O(1)
+        UsersCacheHelper::refreshAll();
+        RolesCacheHelper::refreshAll();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         $this->resetForm();
-        $this->loadUsers();
         $this->showModal = false;
         session()->flash('success', 'User berhasil disimpan.');
     }
@@ -135,7 +122,12 @@ class UserIndex extends Component
     {
         $user = User::findOrFail($this->deleteId);
         $user->delete();
-        $this->loadUsers();
+
+        // Invalidate cache users dan roles secara versioned O(1)
+        UsersCacheHelper::refreshAll();
+        RolesCacheHelper::refreshAll();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         $this->reset(['deleteId', 'deleteName', 'showDeleteModal']);
         session()->flash('success', 'User berhasil dihapus.');
     }
@@ -148,7 +140,10 @@ class UserIndex extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.user-index')
-            ->layout('layouts.dashboard.main');
+        // Data diambil dari Versioned Cache Helper dengan Eager Loading lengkap (Bebas N+1 & Duplikat)
+        return view('livewire.dashboard.user-index', [
+            'users' => UsersCacheHelper::getAllUsersWithRelations(),
+            'pasars' => PasarsCacheHelper::getAllPasar(),
+        ])->layout('layouts.dashboard.main');
     }
 }
