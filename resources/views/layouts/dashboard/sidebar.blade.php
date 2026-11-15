@@ -41,7 +41,7 @@
                   </button>
 
                  <ul id="dropdown-pasar"
-                     class="text-sm {{ request()->routeIs(['dashboard.sarana-prasarana', 'dashboard.pendapatan-pasar']) ? '' : 'hidden' }} py-2 space-y-2">
+                     class="text-sm py-2 space-y-2">
                      <li>
                          <a wire:navigate href="{{ route('dashboard.sarana-prasarana') }}"
                              class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\Dashboard;
 
 use App\Helpers\PasarsCacheHelper;
@@ -10,29 +9,20 @@ use App\Models\PendapatanPasar;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class PendapatanPasarIndex extends Component
 {
-    use WithPagination;
-
     // ─── Filter & Search ──────────────────────────────────────────────────
-    
     public string $search = '';
 
-    
     public ?string $filterPasar = null;
 
-    
     public ?string $filterTahun = null;
 
-    
     public ?string $filterStartDate = null;
 
-    
     public ?string $filterEndDate = null;
 
-    
     public ?string $filterJenis = null;
 
     public int $perPage = 10;
@@ -77,45 +67,61 @@ class PendapatanPasarIndex extends Component
 
     // ─── State Modal Detail Pasar ─────────────────────────────────────────
     public bool $showDetailModal = false;
+
     public ?int $detailPasarId = null;
 
     public function mount(): void
     {
         $currentYear = (int) date('Y');
+
         $this->tahun_ssrd = $currentYear;
         $this->tahun_retribusi = $currentYear;
         $this->tanggal_penyetoran = date('Y-m-d');
         $this->terbilang = TerbilangHelper::make(0);
     }
 
+    // ─── Load More ────────────────────────────────────────────────────────
+
+    public function loadMore(): void
+    {
+        $this->perPage += 10;
+    }
+
+    private function resetLoadMore(): void
+    {
+        $this->perPage = 10;
+    }
+
+    // ─── Filter & Search Updates ──────────────────────────────────────────
+
     public function updatingSearch(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function updatingFilterPasar(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function updatingFilterTahun(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function updatingFilterStartDate(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function updatingFilterEndDate(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function updatingFilterJenis(): void
     {
-        $this->resetPage();
+        $this->resetLoadMore();
     }
 
     public function resetFilters(): void
@@ -128,10 +134,12 @@ class PendapatanPasarIndex extends Component
             'filterEndDate',
             'filterJenis'
         ]);
-        $this->resetPage();
+
+        $this->resetLoadMore();
     }
 
     // ─── Validation Rules ─────────────────────────────────────────────────
+
     protected function createRules(): array
     {
         return [
@@ -172,6 +180,7 @@ class PendapatanPasarIndex extends Component
     }
 
     // ─── CRUD Actions ─────────────────────────────────────────────────────
+
     public function store(): void
     {
         $this->validate($this->createRules());
@@ -199,6 +208,7 @@ class PendapatanPasarIndex extends Component
 
         $this->resetCreateForm();
         PendapatanCacheHelper::refreshAll();
+
         $this->dispatch('ssrd-saved');
         $this->dispatch('notify', type: 'success', message: 'Data SSRD Pendapatan Pasar berhasil disimpan!');
     }
@@ -219,7 +229,7 @@ class PendapatanPasarIndex extends Component
                 'masa_retribusi'     => $this->edit_masa_retribusi,
                 'tahun_retribusi'    => $this->edit_tahun_retribusi,
                 'nomor_urut_ssrd'    => $this->edit_nomor_urut_ssrd,
-                'jenis_retribusi'    => $this->edit_jenis_retribusi,
+                'jenis_retribusi'   => $this->edit_jenis_retribusi,
                 'nomor_ayat'         => $this->edit_nomor_ayat,
                 'jumlah_retribusi'   => $this->edit_jumlah_retribusi,
                 'terbilang'          => $terbilangText,
@@ -232,6 +242,7 @@ class PendapatanPasarIndex extends Component
 
         $this->resetEditForm();
         PendapatanCacheHelper::refreshAll();
+
         $this->dispatch('ssrd-updated');
         $this->dispatch('notify', type: 'success', message: 'Data SSRD Pendapatan Pasar berhasil diperbarui!');
     }
@@ -239,8 +250,11 @@ class PendapatanPasarIndex extends Component
     public function confirmDelete(int $id): void
     {
         $item = PendapatanPasar::with('pasar')->findOrFail($id);
+
         $this->deleteId = $item->id;
+
         $this->deleteInfo = 'SSRD No: ' . ($item->nomor_urut_ssrd ?: '-') . ' (' . ($item->pasar->nama_pasar ?? '-') . ' - Rp ' . number_format($item->jumlah_retribusi, 0, ',', '.') . ')';
+
         $this->showDeleteModal = true;
     }
 
@@ -253,12 +267,15 @@ class PendapatanPasarIndex extends Component
             });
 
             $this->reset(['deleteId', 'deleteInfo', 'showDeleteModal']);
+
             PendapatanCacheHelper::refreshAll();
+
             $this->dispatch('notify', type: 'success', message: 'Data SSRD berhasil dihapus!');
         }
     }
 
     // ─── Detail Modal Pasar ───────────────────────────────────────────────
+
     public function viewPasarDetail(int $pasarId): void
     {
         $this->detailPasarId = $pasarId;
@@ -272,19 +289,23 @@ class PendapatanPasarIndex extends Component
     }
 
     // ─── Reset Forms ──────────────────────────────────────────────────────
+
     private function resetCreateForm(): void
     {
         $currentYear = (int) date('Y');
+
         $this->reset([
             'pasar_id', 'no_rekening_bank', 'masa_retribusi',
             'nomor_urut_ssrd', 'nomor_ayat', 'jumlah_retribusi',
             'nama_penyetor', 'petugas_bank', 'keterangan'
         ]);
+
         $this->tahun_ssrd = $currentYear;
         $this->tahun_retribusi = $currentYear;
         $this->jenis_retribusi = 'SKRD';
         $this->tanggal_penyetoran = date('Y-m-d');
         $this->terbilang = TerbilangHelper::make(0);
+
         $this->resetValidation();
     }
 
@@ -296,9 +317,13 @@ class PendapatanPasarIndex extends Component
             'edit_nomor_ayat', 'edit_jumlah_retribusi', 'edit_terbilang',
             'edit_tanggal_penyetoran', 'edit_nama_penyetor', 'edit_petugas_bank', 'edit_keterangan'
         ]);
+
         $this->edit_jenis_retribusi = 'SKRD';
+
         $this->resetValidation();
     }
+
+    // ─── Render ───────────────────────────────────────────────────────────
 
     public function render()
     {
@@ -306,6 +331,7 @@ class PendapatanPasarIndex extends Component
         $query = PendapatanPasar::with('pasar')
             ->when($this->search, function ($q) {
                 $term = '%' . $this->search . '%';
+
                 $q->where(function ($sub) use ($term) {
                     $sub->where('nomor_urut_ssrd', 'like', $term)
                         ->orWhere('no_rekening_bank', 'like', $term)
@@ -326,15 +352,27 @@ class PendapatanPasarIndex extends Component
             ->latest('tanggal_penyetoran')
             ->latest('id');
 
-        $ssrdList = $query->paginate($this->perPage);
+        // Load More: Ambil satu data tambahan untuk mendeteksi data berikutnya
+        $ssrdList = (clone $query)
+            ->take($this->perPage + 1)
+            ->get();
+
+        $hasMorePages = $ssrdList->count() > $this->perPage;
+
+        if ($hasMorePages) {
+            $ssrdList = $ssrdList->take($this->perPage);
+        }
 
         // Agregasi Ringkasan Keseluruhan (filtered & total)
         $aggregateFiltered = (clone $query)->getQuery();
+
         $totalNominalFiltered = (float) $aggregateFiltered->sum('jumlah_retribusi');
+
         $totalTransaksiFiltered = (int) $aggregateFiltered->count();
 
         // Total All-Time Global dari Cache
         $totalNominalAll = PendapatanCacheHelper::getTotalNominalAll();
+
         $totalTransaksiAll = PendapatanCacheHelper::getTotalTransaksiAll();
 
         // Data List Pasars untuk dropdown dari Cache Global Pasar
@@ -342,8 +380,10 @@ class PendapatanPasarIndex extends Component
 
         // Dapatkan Nama Pasar yang difilter (jika ada)
         $namaPasarTerpilih = null;
+
         if ($this->filterPasar) {
             $pasarTerpilih = $pasars->firstWhere('id', $this->filterPasar);
+
             if ($pasarTerpilih) {
                 $namaPasarTerpilih = $pasarTerpilih->nama_pasar;
             }
@@ -354,7 +394,9 @@ class PendapatanPasarIndex extends Component
 
         // Detail Pasar jika dipilih modal detail
         $detailPasar = null;
+
         $detailRiwayat = collect();
+
         if ($this->detailPasarId) {
             $detailPasar = Pasar::withSum('pendapatanPasars', 'jumlah_retribusi')
                 ->withCount('pendapatanPasars')
@@ -373,18 +415,18 @@ class PendapatanPasarIndex extends Component
         $tahunList = PendapatanCacheHelper::getTahunList();
 
         return view('livewire.dashboard.pendapatan-pasar-index', [
-            'ssrdList'              => $ssrdList,
-            'pasars'                => $pasars,
-            'namaPasarTerpilih'     => $namaPasarTerpilih,
-            'totalNominalFiltered'  => $totalNominalFiltered,
-            'totalTransaksiFiltered'=> $totalTransaksiFiltered,
-            'totalNominalAll'       => $totalNominalAll,
-            'totalTransaksiAll'     => $totalTransaksiAll,
-            'ringkasanPerPasar'     => $ringkasanPerPasar,
-            'detailPasar'           => $detailPasar,
-            'detailRiwayat'         => $detailRiwayat,
-            'tahunList'             => $tahunList,
+            'ssrdList'               => $ssrdList,
+            'hasMorePages'           => $hasMorePages,
+            'pasars'                 => $pasars,
+            'namaPasarTerpilih'      => $namaPasarTerpilih,
+            'totalNominalFiltered'   => $totalNominalFiltered,
+            'totalTransaksiFiltered' => $totalTransaksiFiltered,
+            'totalNominalAll'        => $totalNominalAll,
+            'totalTransaksiAll'      => $totalTransaksiAll,
+            'ringkasanPerPasar'      => $ringkasanPerPasar,
+            'detailPasar'            => $detailPasar,
+            'detailRiwayat'          => $detailRiwayat,
+            'tahunList'              => $tahunList,
         ])->layout('layouts.dashboard.main');
     }
 }
-
