@@ -149,8 +149,6 @@
 
                  <ul id="dropdown-settings" class="{{ request()->routeIs(
                      'dashboard.roles.*',
-                     'dashboard.permissions.*',
-                     'dashboard.user-permissions.*',
                      'dashboard.users.index'
                   ) ? '' : 'hidden' }} py-2 space-y-2">
 
@@ -161,15 +159,13 @@
                              aria-controls="dropdown-role-permission" data-collapse-toggle="dropdown-role-permission">
                              <i class="fas fa-users-cog"></i>
                              <span class="flex-1 ms-3 text-left whitespace-nowrap">
-                                 Peran & Izin
+                                Pengaturan Akun
                              </span>
                              <i class="fa-solid fa-sort-down"></i>
                          </button>
 
                          <ul id="dropdown-role-permission" class="{{ request()->routeIs(
                               'dashboard.roles.*',
-                              'dashboard.permissions.*',
-                              'dashboard.user-permissions.*',
                               'dashboard.users.index'
                         ) ? '' : 'hidden' }} py-2 space-y-2">
                              {{-- Roles --}}
@@ -184,18 +180,6 @@
                                  </a>
                              </li>
 
-                             {{-- Permissions --}}
-                             <li>
-                                 <a wire:navigate href="{{ route('dashboard.permissions.index') }}"
-                                     class="flex items-center w-full p-2 pl-16 rounded-lg transition
-                                       text-gray-900 dark:text-white
-                                       hover:bg-gray-100 dark:hover:bg-gray-700
-                                       {{ request()->routeIs('dashboard.permissions.*') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
-                                     <i class="fa-solid fa-arrow-right"></i>
-                                     <span class="ml-2">Izin</span>
-                                 </a>
-                             </li>
-
                              {{-- Users Management --}}
                              <li>
                                  <a wire:navigate href="{{ route('dashboard.users.index') }}"
@@ -204,7 +188,7 @@
                                        hover:bg-gray-100 dark:hover:bg-gray-700
                                        {{ request()->routeIs('dashboard.users.index') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
                                      <i class="fa-solid fa-arrow-right"></i>
-                                     <span class="ml-2">Akun</span>
+                                     <span class="ml-2">Akun Login</span>
                                  </a>
                              </li>
                          </ul>
