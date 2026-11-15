@@ -1,29 +1,36 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+<x-dashboard-layout>
+    <div class="p-4 sm:p-6 text-gray-900 dark:text-gray-100">
+        {{-- Header Halaman Profil --}}
+        <div class="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                {{ __('Pengaturan Profil & Akun') }}
+            </h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Kelola informasi akun pengguna, kata sandi, dan preferensi keamanan Anda.
+            </p>
+        </div>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+        <div class="space-y-6 max-w-4xl">
+            {{-- Update Profil Information --}}
+            <div class="p-6 bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl">
                 <div class="max-w-xl">
                     <livewire:profile.update-profile-information-form />
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+            {{-- Update Password --}}
+            <div class="p-6 bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl">
                 <div class="max-w-xl">
                     <livewire:profile.update-password-form />
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+            {{-- Delete Account --}}
+            {{-- <div class="p-6 bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl">
                 <div class="max-w-xl">
                     <livewire:profile.delete-user-form />
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
-</x-app-layout>
+</x-dashboard-layout>

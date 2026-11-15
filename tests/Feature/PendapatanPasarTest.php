@@ -75,6 +75,8 @@ class PendapatanPasarTest extends TestCase
 
     public function test_can_create_ssrd_record(): void
     {
+        $customKeterangan = str_repeat('Keterangan bebas ', 40);
+
         Livewire::actingAs($this->adminUser)
             ->test(PendapatanPasarIndex::class)
             ->set('pasar_id', $this->pasar->id)
@@ -89,6 +91,8 @@ class PendapatanPasarTest extends TestCase
             ->set('tanggal_penyetoran', '2026-10-15')
             ->set('nama_penyetor', 'Ahmad Pedagang')
             ->set('petugas_bank', 'Budi Teller BJB')
+            ->set('keterangan', 'Lainnya')
+            ->set('keterangan_lainnya', $customKeterangan)
             ->call('store')
             ->assertDispatched('ssrd-saved')
             ->assertDispatched('notify');
@@ -98,6 +102,7 @@ class PendapatanPasarTest extends TestCase
             'nomor_urut_ssrd'  => '001/SSRD/2026',
             'jumlah_retribusi' => 2500000,
             'nama_penyetor'    => 'Ahmad Pedagang',
+            'keterangan'       => $customKeterangan,
         ]);
     }
 
@@ -134,6 +139,8 @@ class PendapatanPasarTest extends TestCase
             ->set('edit_tanggal_penyetoran', '2026-09-11')
             ->set('edit_nama_penyetor', 'Siti Hawa Updated')
             ->set('edit_petugas_bank', 'Teller 2')
+            ->set('edit_keterangan', 'Lainnya')
+            ->set('edit_keterangan_lainnya', 'Keterangan bebas saat mengedit')
             ->call('update')
             ->assertDispatched('ssrd-updated')
             ->assertDispatched('notify');
@@ -144,6 +151,7 @@ class PendapatanPasarTest extends TestCase
             'jenis_retribusi'  => 'STRD',
             'jumlah_retribusi' => 1750000,
             'nama_penyetor'    => 'Siti Hawa Updated',
+            'keterangan'       => 'Keterangan bebas saat mengedit',
         ]);
     }
 
@@ -178,8 +186,8 @@ class PendapatanPasarTest extends TestCase
             ->test(PendapatanPasarIndex::class)
             ->set('pasar_id', null)
             ->set('nama_penyetor', '')
+            ->set('keterangan', 'Lainnya')
             ->call('store')
-            ->assertHasErrors(['pasar_id', 'nama_penyetor']);
+            ->assertHasErrors(['pasar_id', 'nama_penyetor', 'keterangan_lainnya']);
     }
 }
-
