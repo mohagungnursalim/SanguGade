@@ -47,6 +47,7 @@ class PendapatanPasarIndex extends Component
     public string $nama_penyetor = '';
     public string $petugas_bank = '';
     public string $keterangan = '';
+    public string $keterangan_lainnya = '';
 
     // ─── State Form Edit ──────────────────────────────────────────────────
     public ?int $editId = null;
@@ -64,6 +65,7 @@ class PendapatanPasarIndex extends Component
     public string $edit_nama_penyetor = '';
     public string $edit_petugas_bank = '';
     public string $edit_keterangan = '';
+    public string $edit_keterangan_lainnya = '';
 
     // ─── State Modal Detail Pasar ─────────────────────────────────────────
     public bool $showDetailModal = false;
@@ -138,6 +140,7 @@ class PendapatanPasarIndex extends Component
         $this->resetLoadMore();
     }
 
+
     // ─── Validation Rules ─────────────────────────────────────────────────
 
     protected function createRules(): array
@@ -151,39 +154,157 @@ class PendapatanPasarIndex extends Component
             'nomor_urut_ssrd'    => 'nullable|string|max:50',
             'jenis_retribusi'    => 'required|string|max:50',
             'nomor_ayat'         => 'nullable|string|max:50',
-            'jumlah_retribusi'   => 'required|numeric|min:0',
+            'jumlah_retribusi'   => 'required|numeric|min:1000',
             'tanggal_penyetoran' => 'required|date',
             'nama_penyetor'      => 'required|string|max:150',
             'petugas_bank'       => 'nullable|string|max:150',
-            'keterangan'         => 'required|string|max:500',
+            'keterangan'         => 'required|string',
+            'keterangan_lainnya' => 'required_if:keterangan,Lainnya|nullable|string',
+        ];
+    }
+
+    protected function createMessages(): array
+    {
+        return [
+            'pasar_id.required' => 'Pasar wajib dipilih.',
+            'pasar_id.exists' => 'Pasar yang dipilih tidak valid.',
+
+            'tahun_ssrd.required' => 'Tahun SSRD wajib diisi.',
+            'tahun_ssrd.integer' => 'Tahun SSRD harus berupa angka.',
+            'tahun_ssrd.digits' => 'Tahun SSRD harus terdiri dari 4 digit.',
+            'tahun_ssrd.min' => 'Tahun SSRD minimal 1900.',
+            'tahun_ssrd.max' => 'Tahun SSRD maksimal ' . (date('Y') + 5) . '.',
+
+            'no_rekening_bank.string' => 'Nomor rekening bank harus berupa teks.',
+            'no_rekening_bank.max' => 'Nomor rekening bank maksimal 50 karakter.',
+
+            'masa_retribusi.string' => 'Masa retribusi harus berupa teks.',
+            'masa_retribusi.max' => 'Masa retribusi maksimal 100 karakter.',
+
+            'tahun_retribusi.required' => 'Tahun retribusi wajib diisi.',
+            'tahun_retribusi.integer' => 'Tahun retribusi harus berupa angka.',
+            'tahun_retribusi.digits' => 'Tahun retribusi harus terdiri dari 4 digit.',
+            'tahun_retribusi.min' => 'Tahun retribusi minimal 1900.',
+            'tahun_retribusi.max' => 'Tahun retribusi maksimal ' . (date('Y') + 5) . '.',
+
+            'nomor_urut_ssrd.string' => 'Nomor urut SSRD harus berupa teks.',
+            'nomor_urut_ssrd.max' => 'Nomor urut SSRD maksimal 50 karakter.',
+
+            'jenis_retribusi.required' => 'Jenis retribusi wajib diisi.',
+            'jenis_retribusi.string' => 'Jenis retribusi harus berupa teks.',
+            'jenis_retribusi.max' => 'Jenis retribusi maksimal 50 karakter.',
+
+            'nomor_ayat.string' => 'Nomor ayat harus berupa teks.',
+            'nomor_ayat.max' => 'Nomor ayat maksimal 50 karakter.',
+
+            'jumlah_retribusi.required' => 'Jumlah retribusi wajib diisi.',
+            'jumlah_retribusi.numeric' => 'Jumlah retribusi harus berupa angka.',
+            'jumlah_retribusi.min' => 'Jumlah retribusi minimal Rp1.000.',
+
+            'tanggal_penyetoran.required' => 'Tanggal penyetoran wajib diisi.',
+            'tanggal_penyetoran.date' => 'Tanggal penyetoran tidak valid.',
+
+            'nama_penyetor.required' => 'Nama penyetor wajib diisi.',
+            'nama_penyetor.string' => 'Nama penyetor harus berupa teks.',
+            'nama_penyetor.max' => 'Nama penyetor maksimal 150 karakter.',
+
+            'petugas_bank.string' => 'Nama petugas bank harus berupa teks.',
+            'petugas_bank.max' => 'Nama petugas bank maksimal 150 karakter.',
+
+            'keterangan.required' => 'Keterangan wajib dipilih.',
+            'keterangan.string' => 'Keterangan harus berupa teks.',
+
+            'keterangan_lainnya.required_if' => 'Keterangan lainnya wajib diisi.',
+            'keterangan_lainnya.string' => 'Keterangan lainnya harus berupa teks.',
         ];
     }
 
     protected function editRules(): array
     {
         return [
-            'editId'                 => 'required|exists:pendapatan_pasars,id',
-            'edit_pasar_id'          => 'required|exists:pasars,id',
-            'edit_tahun_ssrd'        => 'required|integer|digits:4|min:1900|max:' . (date('Y') + 5),
-            'edit_no_rekening_bank'  => 'nullable|string|max:50',
-            'edit_masa_retribusi'    => 'nullable|string|max:100',
-            'edit_tahun_retribusi'   => 'required|integer|digits:4|min:1900|max:' . (date('Y') + 5),
-            'edit_nomor_urut_ssrd'   => 'nullable|string|max:50',
-            'edit_jenis_retribusi'   => 'required|string|max:50',
-            'edit_nomor_ayat'        => 'nullable|string|max:50',
-            'edit_jumlah_retribusi'  => 'required|numeric|min:0',
-            'edit_tanggal_penyetoran'=> 'required|date',
-            'edit_nama_penyetor'     => 'required|string|max:150',
-            'edit_petugas_bank'      => 'nullable|string|max:150',
-            'edit_keterangan'        => 'required|string|max:500',
+            'editId'                  => 'required|exists:pendapatan_pasars,id',
+            'edit_pasar_id'           => 'required|exists:pasars,id',
+            'edit_tahun_ssrd'         => 'required|integer|digits:4|min:1900|max:' . (date('Y') + 5),
+            'edit_no_rekening_bank'   => 'nullable|string|max:50',
+            'edit_masa_retribusi'     => 'nullable|string|max:100',
+            'edit_tahun_retribusi'    => 'required|integer|digits:4|min:1900|max:' . (date('Y') + 5),
+            'edit_nomor_urut_ssrd'    => 'nullable|string|max:50',
+            'edit_jenis_retribusi'    => 'required|string|max:50',
+            'edit_nomor_ayat'         => 'nullable|string|max:50',
+            'edit_jumlah_retribusi'   => 'required|numeric|min:1000',
+            'edit_tanggal_penyetoran' => 'required|date',
+            'edit_nama_penyetor'      => 'required|string|max:150',
+            'edit_petugas_bank'       => 'nullable|string|max:150',
+            'edit_keterangan'         => 'required|string',
+            'edit_keterangan_lainnya' => 'required_if:edit_keterangan,Lainnya|nullable|string',
         ];
     }
+
+    protected function editMessages(): array
+    {
+        return [
+            'editId.required' => 'Data SSRD yang akan diubah tidak valid.',
+            'editId.exists' => 'Data SSRD tidak ditemukan.',
+
+            'edit_pasar_id.required' => 'Pasar wajib dipilih.',
+            'edit_pasar_id.exists' => 'Pasar yang dipilih tidak valid.',
+
+            'edit_tahun_ssrd.required' => 'Tahun SSRD wajib diisi.',
+            'edit_tahun_ssrd.integer' => 'Tahun SSRD harus berupa angka.',
+            'edit_tahun_ssrd.digits' => 'Tahun SSRD harus terdiri dari 4 digit.',
+            'edit_tahun_ssrd.min' => 'Tahun SSRD minimal 1900.',
+            'edit_tahun_ssrd.max' => 'Tahun SSRD maksimal ' . (date('Y') + 5) . '.',
+
+            'edit_no_rekening_bank.string' => 'Nomor rekening bank harus berupa teks.',
+            'edit_no_rekening_bank.max' => 'Nomor rekening bank maksimal 50 karakter.',
+
+            'edit_masa_retribusi.string' => 'Masa retribusi harus berupa teks.',
+            'edit_masa_retribusi.max' => 'Masa retribusi maksimal 100 karakter.',
+
+            'edit_tahun_retribusi.required' => 'Tahun retribusi wajib diisi.',
+            'edit_tahun_retribusi.integer' => 'Tahun retribusi harus berupa angka.',
+            'edit_tahun_retribusi.digits' => 'Tahun retribusi harus terdiri dari 4 digit.',
+            'edit_tahun_retribusi.min' => 'Tahun retribusi minimal 1900.',
+            'edit_tahun_retribusi.max' => 'Tahun retribusi maksimal ' . (date('Y') + 5) . '.',
+
+            'edit_nomor_urut_ssrd.string' => 'Nomor urut SSRD harus berupa teks.',
+            'edit_nomor_urut_ssrd.max' => 'Nomor urut SSRD maksimal 50 karakter.',
+
+            'edit_jenis_retribusi.required' => 'Jenis retribusi wajib diisi.',
+            'edit_jenis_retribusi.string' => 'Jenis retribusi harus berupa teks.',
+            'edit_jenis_retribusi.max' => 'Jenis retribusi maksimal 50 karakter.',
+
+            'edit_nomor_ayat.string' => 'Nomor ayat harus berupa teks.',
+            'edit_nomor_ayat.max' => 'Nomor ayat maksimal 50 karakter.',
+
+            'edit_jumlah_retribusi.required' => 'Jumlah retribusi wajib diisi.',
+            'edit_jumlah_retribusi.numeric' => 'Jumlah retribusi harus berupa angka.',
+            'edit_jumlah_retribusi.min' => 'Jumlah retribusi minimal Rp1.000.',
+
+            'edit_tanggal_penyetoran.required' => 'Tanggal penyetoran wajib diisi.',
+            'edit_tanggal_penyetoran.date' => 'Tanggal penyetoran tidak valid.',
+
+            'edit_nama_penyetor.required' => 'Nama penyetor wajib diisi.',
+            'edit_nama_penyetor.string' => 'Nama penyetor harus berupa teks.',
+            'edit_nama_penyetor.max' => 'Nama penyetor maksimal 150 karakter.',
+
+            'edit_petugas_bank.string' => 'Nama petugas bank harus berupa teks.',
+            'edit_petugas_bank.max' => 'Nama petugas bank maksimal 150 karakter.',
+
+            'edit_keterangan.required' => 'Keterangan wajib dipilih.',
+            'edit_keterangan.string' => 'Keterangan harus berupa teks.',
+
+            'edit_keterangan_lainnya.required_if' => 'Keterangan lainnya wajib diisi.',
+            'edit_keterangan_lainnya.string' => 'Keterangan lainnya harus berupa teks.',
+        ];
+    }
+
 
     // ─── CRUD Actions ─────────────────────────────────────────────────────
 
     public function store(): void
     {
-        $this->validate($this->createRules());
+        $this->validate($this->createRules(), $this->createMessages());
 
         DB::transaction(function () {
             $terbilangText = TerbilangHelper::make($this->jumlah_retribusi);
@@ -202,7 +323,9 @@ class PendapatanPasarIndex extends Component
                 'tanggal_penyetoran' => $this->tanggal_penyetoran,
                 'nama_penyetor'      => $this->nama_penyetor,
                 'petugas_bank'       => $this->petugas_bank,
-                'keterangan'         => $this->keterangan,
+                'keterangan'         => $this->keterangan === 'Lainnya'
+                    ? $this->keterangan_lainnya
+                    : $this->keterangan,
             ]);
         });
 
@@ -215,7 +338,7 @@ class PendapatanPasarIndex extends Component
 
     public function update(): void
     {
-        $this->validate($this->editRules());
+        $this->validate($this->editRules(), $this->editMessages());
 
         DB::transaction(function () {
             $item = PendapatanPasar::findOrFail($this->editId);
@@ -236,7 +359,9 @@ class PendapatanPasarIndex extends Component
                 'tanggal_penyetoran' => $this->edit_tanggal_penyetoran,
                 'nama_penyetor'      => $this->edit_nama_penyetor,
                 'petugas_bank'       => $this->edit_petugas_bank,
-                'keterangan'         => $this->edit_keterangan,
+                'keterangan'         => $this->edit_keterangan === 'Lainnya'
+                    ? $this->edit_keterangan_lainnya
+                    : $this->edit_keterangan,
             ]);
         });
 
@@ -297,7 +422,7 @@ class PendapatanPasarIndex extends Component
         $this->reset([
             'pasar_id', 'no_rekening_bank', 'masa_retribusi',
             'nomor_urut_ssrd', 'nomor_ayat', 'jumlah_retribusi',
-            'nama_penyetor', 'petugas_bank', 'keterangan'
+            'nama_penyetor', 'petugas_bank', 'keterangan', 'keterangan_lainnya'
         ]);
 
         $this->tahun_ssrd = $currentYear;
@@ -315,7 +440,8 @@ class PendapatanPasarIndex extends Component
             'editId', 'edit_pasar_id', 'edit_tahun_ssrd', 'edit_no_rekening_bank',
             'edit_masa_retribusi', 'edit_tahun_retribusi', 'edit_nomor_urut_ssrd',
             'edit_nomor_ayat', 'edit_jumlah_retribusi', 'edit_terbilang',
-            'edit_tanggal_penyetoran', 'edit_nama_penyetor', 'edit_petugas_bank', 'edit_keterangan'
+            'edit_tanggal_penyetoran', 'edit_nama_penyetor', 'edit_petugas_bank',
+            'edit_keterangan', 'edit_keterangan_lainnya'
         ]);
 
         $this->edit_jenis_retribusi = 'SKRD';

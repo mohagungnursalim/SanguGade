@@ -106,12 +106,9 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
             Route::get('/users', UserIndex::class)->name('users.index');
         });
 
+    // ========= Profile ==========
+    Route::view('/profile', 'livewire.dashboard.profile')
+        ->name('profile');
 });
-
-
-
-Route::view('profile', 'livewire.dashboard.profile')
-    ->middleware(['auth'])
-    ->name('profile');
 
 require __DIR__.'/auth.php';

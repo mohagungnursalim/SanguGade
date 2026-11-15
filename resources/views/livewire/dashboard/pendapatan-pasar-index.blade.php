@@ -771,25 +771,41 @@
                             </div>
 
                             {{-- Keterangan --}}
-                            <div class="sm:col-span-3">
+                            <div class="sm:col-span-3" x-data="{ keterangan: @entangle('keterangan').live }">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Keterangan Tambahan
                                 </label>
 
                                 <select
-                                    wire:model.defer="keterangan"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
+                                    x-model="keterangan"
+                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                                >
                                     <option value="">--Pilih Keterangan--</option>
                                     <option value="Ret. Harian">Ret. Harian</option>
                                     <option value="Ret. Sewa Tempat Kios">Ret. Sewa Tempat Kios</option>
                                     <option value="Ret. Sewat Tempat Lapak">Ret. Sewa Tempat Lapak</option>
+                                    <option value="Ret. Sewat Tempat Los">Ret. Sewa Tempat Los</option>
                                     <option value="Lainnya">Lainnya</option>
                                 </select>
+
+                                <div x-show="keterangan === 'Lainnya'" x-cloak class="mt-2">
+                                    <textarea
+                                        wire:model.defer="keterangan_lainnya"
+                                        rows="3"
+                                        placeholder="Tuliskan keterangan lainnya..."
+                                        class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                                    ></textarea>
+
+                                    @error('keterangan_lainnya')
+                                        <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
                                 @error('keterangan')
                                     <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
+
                         </div>
                     </div>
 
@@ -1034,20 +1050,33 @@
                                 @error('edit_petugas_bank') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                           <div class="sm:col-span-3">
+                           <div class="sm:col-span-3" x-data="{ keterangan: @entangle('edit_keterangan').live }">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Keterangan Tambahan
                                 </label>
 
                                 <select
-                                    wire:model.defer="edit_keterangan"
+                                    x-model="keterangan"
                                     class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500">
                                     <option value="">--Pilih Keterangan--</option>
                                     <option value="Ret. Harian">Ret. Harian</option>
                                     <option value="Ret. Sewa Tempat Kios">Ret. Sewa Tempat Kios</option>
                                     <option value="Ret. Sewat Tempat Lapak">Ret. Sewat Tempat Lapak</option>
+                                    <option value="Ret. Sewat Tempat Los">Ret. Sewa Tempat Los</option>
                                     <option value="Lainnya">Lainnya</option>
                                 </select>
+
+                                <div x-show="keterangan === 'Lainnya'" x-cloak class="mt-2">
+                                    <textarea
+                                        wire:model.defer="edit_keterangan_lainnya"
+                                        rows="3"
+                                        placeholder="Tuliskan keterangan lainnya..."
+                                        class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+                                    ></textarea>
+                                    @error('edit_keterangan_lainnya')
+                                        <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
                                 @error('edit_keterangan')
                                     <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p>
@@ -1402,7 +1431,16 @@ function ssrdManager() {
             this.$wire.set('edit_tanggal_penyetoran', tgl);
             this.$wire.set('edit_nama_penyetor', item.nama_penyetor || '');
             this.$wire.set('edit_petugas_bank', item.petugas_bank || '');
-            this.$wire.set('edit_keterangan', item.keterangan || '');
+            const predefinedKeterangan = [
+                'Ret. Harian',
+                'Ret. Sewa Tempat Kios',
+                'Ret. Sewat Tempat Lapak',
+                'Ret. Sewat Tempat Los'
+            ];
+            const isCustomKeterangan = item.keterangan
+                && !predefinedKeterangan.includes(item.keterangan);
+            this.$wire.set('edit_keterangan', isCustomKeterangan ? 'Lainnya' : (item.keterangan || ''));
+            this.$wire.set('edit_keterangan_lainnya', isCustomKeterangan ? item.keterangan : '');
 
             this.modalOpen = true;
             document.body.classList.add('overflow-hidden');
@@ -1482,4 +1520,3 @@ function ssrdManager() {
 }
 </script>
 @endpush
-
