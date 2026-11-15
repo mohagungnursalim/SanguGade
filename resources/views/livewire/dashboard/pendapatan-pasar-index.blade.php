@@ -312,7 +312,7 @@
                         <tr class="hover:bg-emerald-50/40 dark:hover:bg-gray-900 transition">
                             {{-- No --}}
                             <td class="px-3 py-3 text-center text-gray-400 font-mono">
-                                {{ $ssrdList->firstItem() + $index }}
+                                {{ $index + 1 }}
                             </td>
 
                             {{-- Pasar --}}
@@ -441,7 +441,7 @@
                 <tfoot class="bg-gray-100 dark:bg-gray-900 font-bold text-xs text-gray-800 dark:text-gray-200">
                     <tr>
                         <td colspan="6" class="px-3 py-2.5 text-right uppercase tracking-wider border-t border-gray-300 dark:border-gray-700">
-                            Subtotal Halaman Ini:
+                            Subtotal Data Ditampilkan:
                         </td>
                         <td class="px-3 py-2.5 text-right text-emerald-600 dark:text-emerald-400 border-t border-gray-300 dark:border-gray-700">
                             Rp {{ number_format($ssrdList->sum('jumlah_retribusi'), 0, ',', '.') }}
@@ -453,10 +453,40 @@
             </table>
         </div>
 
-        {{-- Pagination --}}
-        @if ($ssrdList->hasPages())
-            <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                {{ $ssrdList->links() }}
+       {{-- Load More --}}
+        @if ($hasMorePages)
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col items-center gap-2">
+
+                    <button
+                        type="button"
+                        wire:click="loadMore"
+                        wire:loading.attr="disabled"
+                        wire:target="loadMore"
+                        class="inline-flex items-center justify-center gap-2
+                            px-5 py-2.5 rounded-lg
+                            text-xs font-semibold
+                            bg-emerald-600 hover:bg-emerald-700
+                            text-white
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            transition"
+                    >
+                        <span wire:loading.remove wire:target="loadMore">
+                            <i class="fa-solid fa-chevron-down mr-1"></i>
+                            Tampilkan Lebih
+                        </span>
+
+                        <span wire:loading wire:target="loadMore">
+                            <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                            Memuat Data...
+                        </span>
+                    </button>
+
+                    <span class="text-[10px] text-gray-400">
+                        Menampilkan {{ $ssrdList->count() }} data
+                    </span>
+
+                </div>
             </div>
         @endif
     </div>
