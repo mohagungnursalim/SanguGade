@@ -38,7 +38,9 @@
     @stack('styles')
 </head>
 
-<body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<body
+    class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+    x-data="{ sidebarOpen: {{ request()->routeIs('dashboard') ? 'false' : 'true' }} }">
 
     {{-- Navbar (akan kita isi tombolnya) --}}
     @include('layouts.dashboard.navbar')
@@ -47,7 +49,11 @@
     @include('layouts.dashboard.sidebar')
 
     {{-- Konten --}}
-    <div class="p-4 sm:ml-64">
+    <div
+        class="p-4 {{ request()->routeIs('dashboard') ? '' : 'sm:ml-64' }}"
+        @if (request()->routeIs('dashboard'))
+            :class="sidebarOpen ? 'sm:ml-64' : 'sm:ml-0'"
+        @endif>
         <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
             {{ $slot }}
         </div>
