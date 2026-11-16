@@ -732,12 +732,17 @@
                         </div>
                     </fieldset>
 
-                    {{-- 3. Aktivitas & Kapasitas --}}
-                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <legend class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
-                            <i class="fas fa-users"></i> Data Aktivitas &amp; Kapasitas
+                    {{-- 3. Aktivitas & Kapasitas --}}          
+                    <fieldset class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-5">
+
+                        <legend class="px-2 text-xs font-semibold uppercase tracking-wider
+                                    text-gray-400 dark:text-gray-500">
+                            <i class="fas fa-users mr-2"></i>
+                            Data Aktivitas & Kapasitas
                         </legend>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+
                             @foreach([
                                 ['jumlah_pedagang', 'Pedagang Tetap'],
                                 ['ptt', 'Pedagang Tidak Tetap (PTT)'],
@@ -746,24 +751,37 @@
                                 ['lapak', 'Lapak Pelataran'],
                                 ['ruko', 'Ruko'],
                             ] as [$field, $label])
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ $label }}</label>
-                                <input
-                                    wire:model.defer="{{ $field }}"
-                                    type="number"
-                                    min="0"
-                                    value="0"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-                                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                           focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
-                                />
-                                @error($field)
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
+
+                                <div class="min-w-0">
+
+                                    <label class="block h-12 mb-3 text-sm font-medium
+                                                leading-5 text-gray-600 dark:text-gray-400">
+                                        {{ $label }}
+                                    </label>
+
+                                    <input
+                                        wire:model.defer="{{ $field }}"
+                                        type="number"
+                                        min="0"
+                                        class="block w-full h-11 px-3 text-sm text-center
+                                            border border-gray-300 dark:border-gray-600
+                                            rounded-xl bg-white dark:bg-gray-700
+                                            text-gray-900 dark:text-white
+                                            focus:ring-2 focus:ring-blue-500
+                                            focus:border-blue-500">
+
+                                    @error($field)
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+
+                                </div>
+
                             @endforeach
+
                         </div>
                     </fieldset>
+
+
 
                     {{-- 4. Kondisi Sarana --}}
                     <fieldset class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
