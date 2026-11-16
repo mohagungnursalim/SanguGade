@@ -33,13 +33,16 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-bold text-gray-800 dark:text-white">Sarana Prasarana Pasar</h1>
+            @can('read')
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 Total:
                 <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $totalPasar }} Pasar</span>
             </p>
+            @endcan
         </div>
 
         {{-- Tombol Tambah --}}
+        @can('create')
         <button
             type="button"
             @click="openCreateModal()"
@@ -48,12 +51,14 @@
             <i class="fas fa-plus"></i>
             Tambah Pasar
         </button>
+        @endcan
     </div>
 
 
     {{-- =====================================================================
-         SEARCH
+         SEARCH & TABEL DATA
     ====================================================================== --}}
+    @can('read')
     <div class="mb-5">
         <div class="relative max-w-sm">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -76,9 +81,6 @@
     </div>
 
 
-    {{-- =====================================================================
-         TABEL DATA
-    ====================================================================== --}}
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-center text-gray-700 dark:text-gray-300 border-collapse">
@@ -261,6 +263,8 @@
                 <div class="flex items-center justify-center gap-1">
 
                     {{-- Tombol Edit menggunakan class 'btn-edit-pasar' dan dataset JSON --}}
+                    @can('update')
+                    @if (auth()->user()->hasRole('admin') || (int) auth()->user()->pasar_id === $pasar->id)
                     <button
                         type="button"
                         data-pasar="{{ json_encode($pasar) }}"
@@ -269,8 +273,12 @@
                     >
                         <i class="fas fa-edit text-xs pointer-events-none"></i>
                     </button>
+                    @endif
+                    @endcan
 
                     {{-- Hapus --}}
+                    @can('delete')
+                    @if (auth()->user()->pasar_id === $pasar->id || auth()->user()->hasRole('admin'))     
                     <button
                         type="button"
                         wire:click="confirmDelete({{ $pasar->id }})"
@@ -278,10 +286,11 @@
                         wire:target="confirmDelete({{ $pasar->id }})"
                         class="inline-flex items-center justify-center w-7 h-7 rounded
                                bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50"
-                        title="Hapus"
-                    >
+                        title="Hapus">
                         <i class="fas fa-trash text-xs"></i>
                     </button>
+                    @endif
+                    @endcan
 
                 </div>
             </td>
@@ -446,6 +455,11 @@
         </div>
         @endif
     </div>
+    @else
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+        Anda tidak memiliki hak akses untuk melihat data pasar.
+    </div>
+    @endcan
 
 
     {{-- =====================================================================
@@ -491,6 +505,7 @@
 
 
             {{-- ─── FORM CREATE ──────────────────────────────────────────── --}}
+            @can('create')
             <div x-show="mode === 'create'">
                 <form
                     wire:submit.prevent="store"
@@ -839,9 +854,11 @@
 
                 </form>
             </div>
+            @endcan
 
 
             {{-- ─── FORM EDIT ────────────────────────────────────────────── --}}
+            @can('update')
             <div x-show="mode === 'edit'">
                 <form
                     wire:submit.prevent="update"
@@ -1189,6 +1206,7 @@
 
                 </form>
             </div>
+            @endcan
 
         </div>{{-- end modal box --}}
     </div>{{-- end modal overlay --}}
@@ -1197,6 +1215,7 @@
     {{-- =====================================================================
          MODAL KONFIRMASI HAPUS
     ====================================================================== --}}
+    @can('delete')
     <div
         x-data="{ showDeleteModal: @entangle('showDeleteModal') }">
         <div
@@ -1252,6 +1271,7 @@
             </div>
         </div>
     </div>
+    @endcan
 
 
     {{-- =====================================================================
