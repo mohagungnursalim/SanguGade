@@ -19,10 +19,19 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'pasar_id',
         'name',
         'email',
         'password',
     ];
+
+    /**
+     * Relasi ke Pasar yang dimounting ke user ini
+     */
+    public function pasar()
+    {
+        return $this->belongsTo(Pasar::class, 'pasar_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -14,6 +14,7 @@ class PendapatanPasar extends Model
 
     protected $fillable = [
         'pasar_id',
+        'user_id',
         'tahun_ssrd',
         'no_rekening_bank',
         'masa_retribusi',
@@ -41,6 +42,11 @@ class PendapatanPasar extends Model
         return $this->belongsTo(Pasar::class, 'pasar_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     /**
      * Format rupiah helper
      */
@@ -49,4 +55,3 @@ class PendapatanPasar extends Model
         return 'Rp ' . number_format($this->jumlah_retribusi, 0, ',', '.');
     }
 }
-

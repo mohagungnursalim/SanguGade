@@ -36,6 +36,7 @@
         </div>
 
         <div class="flex items-center gap-2">
+            @can('read')
             <button
                 type="button"
                 @click="tab = tab === 'ringkasan' ? 'transaksi' : 'ringkasan'"
@@ -44,7 +45,9 @@
                 <i class="fas text-xs" :class="tab === 'ringkasan' ? 'fa-list' : 'fa-chart-pie'"></i>
                 <span x-text="tab === 'ringkasan' ? 'Lihat tabel' : 'Ringkasan pasar'"></span>
             </button>
+            @endcan
 
+            @can('create')
             <button
                 type="button"
                 @click="openCreateModal()"
@@ -53,9 +56,11 @@
                 <i class="fas fa-plus text-xs"></i>
                 Tambah SSRD
             </button>
+            @endcan
         </div>
     </header>
 
+    @can('read')
     {{-- ─── 4 KARTU STATISTIK ─────────────────────────────────────────────── --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-200 dark:divide-gray-700 mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
         {{-- Total Pendapatan Seluruhnya --}}
@@ -402,6 +407,7 @@
                                     </button>
 
                                     {{-- Tombol Edit --}}
+                                    @can('update')
                                     <button
                                         type="button"
                                         @click="openEditModal(@js($item))"
@@ -410,8 +416,10 @@
                                     >
                                         <i class="fas fa-edit text-xs"></i>
                                     </button>
+                                    @endcan
 
                                     {{-- Tombol Hapus --}}
+                                    @can('delete')
                                     <button
                                         type="button"
                                         wire:click="confirmDelete({{ $item->id }})"
@@ -421,6 +429,7 @@
                                     >
                                         <i class="fas fa-trash text-xs"></i>
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -490,6 +499,11 @@
             </div>
         @endif
     </div>
+    @else
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+        Anda tidak memiliki hak akses untuk melihat data SSRD.
+    </div>
+    @endcan
 
     {{-- =====================================================================
          MODAL REUSABLE ALPINE: TAMBAH & EDIT SSRD
@@ -533,6 +547,7 @@
             </div>
 
             {{-- ─── FORM CREATE ──────────────────────────────────────────── --}}
+            @can('create')
             <div x-show="mode === 'create'">
                 <form wire:submit.prevent="store" class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR --}}
@@ -830,8 +845,10 @@
                     </div>
                 </form>
             </div>
+            @endcan
 
             {{-- ─── FORM EDIT ──────────────────────────────────────────────── --}}
+            @can('update')
             <div x-show="mode === 'edit'">
                 <form wire:submit.prevent="update" class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR (EDIT) --}}
@@ -1106,12 +1123,14 @@
                     </div>
                 </form>
             </div>
+            @endcan
         </div>
     </div>
 
     {{-- =====================================================================
          MODAL DETAIL QUICK-VIEW FORMULIR SSRD (MURNI CLIENT-SIDE ALPINE)
     ====================================================================== --}}
+    @can('read')
     <div
         x-show="detailItem !== null"
         x-transition:enter="transition ease-out duration-300"
@@ -1150,7 +1169,6 @@
                             <p class="text-gray-500 text-[11px]" x-text="'Tahun SSRD: ' + detailItem.tahun_ssrd"></p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div>
                             <span class="text-gray-400 text-[10px] block uppercase">No. Rekening Bank:</span>
@@ -1213,10 +1231,12 @@
             </div>
         </div>
     </div>
+    @endcan
 
     {{-- =====================================================================
          MODAL DETAIL PASAR & RIWAYAT SSRD (DETAIL BERDASARKAN PASAR)
     ====================================================================== --}}
+    @can('read')
     @if ($showDetailModal && $detailPasar)
     <div
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -1300,10 +1320,12 @@
         </div>
     </div>
     @endif
+    @endcan
 
     {{-- =====================================================================
          MODAL KONFIRMASI HAPUS
     ====================================================================== --}}
+    @can('delete')
     <div x-data="{ showDeleteModal: @entangle('showDeleteModal') }">
         <div
             x-show="showDeleteModal"
@@ -1362,6 +1384,7 @@
             </div>
         </div>
     </div>
+    @endcan
 
 </div>
 

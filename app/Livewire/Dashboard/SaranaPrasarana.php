@@ -160,6 +160,7 @@ class SaranaPrasarana extends Component
     public function prepareEdit(int $id): void
     {
         $pasar = Pasar::findOrFail($id);
+        $this->authorizeUpdatePasar($pasar);
 
         $this->editId               = $pasar->id;
         $this->editNamaPasar        = $pasar->nama_pasar;
@@ -193,6 +194,8 @@ class SaranaPrasarana extends Component
     // ─── Simpan data baru ────────────────────────────────────────────────────
     public function store(): void
     {
+        abort_if(!auth()->user()->can('create'), 403, 'Anda tidak memiliki hak akses untuk menambah pasar.');
+
         $this->validate($this->createRules());
 
         $imagePath = $this->image
@@ -232,9 +235,12 @@ class SaranaPrasarana extends Component
     // ─── Perbarui data ───────────────────────────────────────────────────────
     public function update(): void
     {
-        $this->validate($this->editRules());
+        abort_if(!$this->editId, 404);
 
         $pasar = Pasar::findOrFail($this->editId);
+        $this->authorizeUpdatePasar($pasar);
+
+        $this->validate($this->editRules());
 
         // Tangani gambar
         $imagePath = $pasar->image;
@@ -280,6 +286,8 @@ class SaranaPrasarana extends Component
     // ─── Konfirmasi hapus ────────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_if(!auth()->user()->can('delete'), 403, 'Anda tidak memiliki hak akses untuk menghapus pasar.');
+
         $pasar = Pasar::findOrFail($id);
         $this->deleteId      = $pasar->id;
         $this->deleteName    = $pasar->nama_pasar;
@@ -289,6 +297,8 @@ class SaranaPrasarana extends Component
     // ─── Hapus data ──────────────────────────────────────────────────────────
     public function delete(): void
     {
+        abort_if(!auth()->user()->can('delete'), 403, 'Anda tidak memiliki hak akses untuk menghapus pasar.');
+
         $pasar = Pasar::findOrFail($this->deleteId);
 
         if ($pasar->image && Storage::disk('public')->exists($pasar->image)) {
@@ -330,11 +340,29 @@ class SaranaPrasarana extends Component
         $this->resetValidation();
     }
 
+    private function authorizeUpdatePasar(Pasar $pasar): void
+    {
+        $user = auth()->user();
+
+        abort_unless($user && $user->can('update'), 403, 'Anda tidak memiliki hak akses untuk memperbarui pasar.');
+
+        if (!$user->hasRole('admin')) {
+            abort_unless(
+                (int) $user->pasar_id === $pasar->id,
+                403,
+                'Anda hanya dapat memperbarui data pasar yang ditugaskan kepada Anda.'
+            );
+        }
+    }
+
     // ─── Render ──────────────────────────────────────────────────────────────
     public function render()
     {
+        $canRead = auth()->user()?->can('read') ?? false;
+
         $pasars = Pasar::query()
-            ->when($this->search, fn ($q) =>
+            ->when(!$canRead, fn ($q) => $q->whereRaw('1 = 0'))
+            ->when($canRead && $this->search, fn ($q) =>
                 $q->where('nama_pasar', 'like', '%' . $this->search . '%')
                   ->orWhere('kecamatan',  'like', '%' . $this->search . '%')
                   ->orWhere('kelurahan',  'like', '%' . $this->search . '%')
@@ -342,9 +370,8 @@ class SaranaPrasarana extends Component
             ->oldest('tahun_pembangunan')
             ->paginate($this->perPage);
 
-        // ─── Totals Global dari Cache ─────────────────────────────────────
-        $totals = PasarsCacheHelper::getGlobalTotals();
-        $totalPasar = PasarsCacheHelper::getTotalPasar();
+        $totals = $canRead ? PasarsCacheHelper::getGlobalTotals() : null;
+        $totalPasar = $canRead ? PasarsCacheHelper::getTotalPasar() : 0;
 
         return view('livewire.dashboard.sarana-prasarana', [
             'pasars'     => $pasars,
@@ -353,4 +380,3 @@ class SaranaPrasarana extends Component
         ])->layout('layouts.dashboard.main');
     }
 }
-

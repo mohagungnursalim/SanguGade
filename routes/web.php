@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\CkeditorController;
 use App\Livewire\Dashboard\Categories;
 use App\Livewire\Dashboard\Dashboard;
-use App\Livewire\Dashboard\PermissionIndex;
 use App\Livewire\Dashboard\PendapatanPasarIndex;
 use App\Livewire\Dashboard\Posts;
 use App\Livewire\Dashboard\PostsCreate;
@@ -102,7 +101,6 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
          */
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/roles', RoleIndex::class)->name('roles.index');
-            Route::get('/permissions', PermissionIndex::class)->name('permissions.index');
             Route::get('/users', UserIndex::class)->name('users.index');
         });
 

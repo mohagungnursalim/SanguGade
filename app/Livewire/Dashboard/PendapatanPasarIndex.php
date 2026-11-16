@@ -4,8 +4,8 @@ namespace App\Livewire\Dashboard;
 use App\Helpers\PasarsCacheHelper;
 use App\Helpers\PendapatanCacheHelper;
 use App\Helpers\TerbilangHelper;
-use App\Models\Pasar;
 use App\Models\PendapatanPasar;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -80,6 +80,10 @@ class PendapatanPasarIndex extends Component
         $this->tahun_retribusi = $currentYear;
         $this->tanggal_penyetoran = date('Y-m-d');
         $this->terbilang = TerbilangHelper::make(0);
+
+        if ($this->isOperator()) {
+            $this->pasar_id = auth()->user()->pasar_id;
+        }
     }
 
     // ─── Load More ────────────────────────────────────────────────────────
@@ -304,6 +308,13 @@ class PendapatanPasarIndex extends Component
 
     public function store(): void
     {
+        abort_if(!auth()->user()->can('create'), 403, 'Anda tidak memiliki hak akses untuk menambah data SSRD.');
+
+        if ($this->isOperator()) {
+            abort_unless(auth()->user()->pasar_id, 403, 'Akun operator belum ditugaskan ke pasar.');
+            $this->pasar_id = (int) auth()->user()->pasar_id;
+        }
+
         $this->validate($this->createRules(), $this->createMessages());
 
         DB::transaction(function () {
@@ -311,6 +322,7 @@ class PendapatanPasarIndex extends Component
 
             PendapatanPasar::create([
                 'pasar_id'           => $this->pasar_id,
+                'user_id'            => auth()->id(),
                 'tahun_ssrd'         => $this->tahun_ssrd,
                 'no_rekening_bank'   => $this->no_rekening_bank,
                 'masa_retribusi'     => $this->masa_retribusi,
@@ -338,11 +350,18 @@ class PendapatanPasarIndex extends Component
 
     public function update(): void
     {
+        abort_if(!auth()->user()->can('update'), 403, 'Anda tidak memiliki hak akses untuk memperbarui data SSRD.');
+
+        $item = $this->accessiblePendapatanQuery()->findOrFail($this->editId);
+
+        if ($this->isOperator()) {
+            abort_unless(auth()->user()->pasar_id, 403, 'Akun operator belum ditugaskan ke pasar.');
+            $this->edit_pasar_id = (int) auth()->user()->pasar_id;
+        }
+
         $this->validate($this->editRules(), $this->editMessages());
 
-        DB::transaction(function () {
-            $item = PendapatanPasar::findOrFail($this->editId);
-
+        DB::transaction(function () use ($item) {
             $terbilangText = TerbilangHelper::make($this->edit_jumlah_retribusi);
 
             $item->update([
@@ -374,7 +393,9 @@ class PendapatanPasarIndex extends Component
 
     public function confirmDelete(int $id): void
     {
-        $item = PendapatanPasar::with('pasar')->findOrFail($id);
+        abort_if(!auth()->user()->can('delete'), 403, 'Anda tidak memiliki hak akses untuk menghapus data SSRD.');
+
+        $item = $this->accessiblePendapatanQuery()->with('pasar')->findOrFail($id);
 
         $this->deleteId = $item->id;
 
@@ -385,9 +406,11 @@ class PendapatanPasarIndex extends Component
 
     public function delete(): void
     {
+        abort_if(!auth()->user()->can('delete'), 403, 'Anda tidak memiliki hak akses untuk menghapus data SSRD.');
+
         if ($this->deleteId) {
             DB::transaction(function () {
-                $item = PendapatanPasar::findOrFail($this->deleteId);
+                $item = $this->accessiblePendapatanQuery()->findOrFail($this->deleteId);
                 $item->delete();
             });
 
@@ -403,6 +426,8 @@ class PendapatanPasarIndex extends Component
 
     public function viewPasarDetail(int $pasarId): void
     {
+        abort_unless(auth()->user()->can('read'), 403, 'Anda tidak memiliki hak akses untuk melihat data SSRD.');
+
         $this->detailPasarId = $pasarId;
         $this->showDetailModal = true;
     }
@@ -430,6 +455,9 @@ class PendapatanPasarIndex extends Component
         $this->jenis_retribusi = 'SKRD';
         $this->tanggal_penyetoran = date('Y-m-d');
         $this->terbilang = TerbilangHelper::make(0);
+        if ($this->isOperator()) {
+            $this->pasar_id = auth()->user()->pasar_id;
+        }
 
         $this->resetValidation();
     }
@@ -449,12 +477,77 @@ class PendapatanPasarIndex extends Component
         $this->resetValidation();
     }
 
+    private function accessiblePendapatanQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = PendapatanPasar::query();
+
+        if ($this->isOperator()) {
+            if (!$user->pasar_id) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where('pasar_id', $user->pasar_id);
+            }
+        } elseif (!$this->isAdmin()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
+    }
+
+    private function cachePasarScope(): ?int
+    {
+        $user = auth()->user();
+
+        return $this->isOperator() ? ($user->pasar_id ? (int) $user->pasar_id : -1) : null;
+    }
+
+    private function isOperator(): bool
+    {
+        $user = auth()->user();
+
+        return $user->hasRole('operator') && !$this->isAdmin();
+    }
+
+    private function isAdmin(): bool
+    {
+        return auth()->user()->hasRole('admin');
+    }
+
     // ─── Render ───────────────────────────────────────────────────────────
 
     public function render()
     {
+        $user = auth()->user();
+        if (!$user->can('read')) {
+            $pasars = PasarsCacheHelper::getAllPasar();
+            if ($this->isOperator()) {
+                $pasars = $user->pasar_id
+                    ? $pasars->where('id', $user->pasar_id)->values()
+                    : collect();
+            }
+
+            return view('livewire.dashboard.pendapatan-pasar-index', [
+                'ssrdList' => collect(),
+                'hasMorePages' => false,
+                'pasars' => $pasars,
+                'namaPasarTerpilih' => null,
+                'totalNominalFiltered' => 0,
+                'totalTransaksiFiltered' => 0,
+                'totalNominalAll' => 0,
+                'totalTransaksiAll' => 0,
+                'ringkasanPerPasar' => collect(),
+                'detailPasar' => null,
+                'detailRiwayat' => collect(),
+                'tahunList' => [(int) date('Y')],
+            ])->layout('layouts.dashboard.main');
+        }
+
+        $ownerId = ($this->isAdmin() || $this->isOperator()) ? null : (int) $user->id;
+        $pasarScope = $this->cachePasarScope();
+
         // Query List Pendapatan SSRD
-        $query = PendapatanPasar::with('pasar')
+        $query = $this->accessiblePendapatanQuery()->with('pasar')
             ->when($this->search, function ($q) {
                 $term = '%' . $this->search . '%';
 
@@ -489,20 +582,21 @@ class PendapatanPasarIndex extends Component
             $ssrdList = $ssrdList->take($this->perPage);
         }
 
-        // Agregasi Ringkasan Keseluruhan (filtered & total)
-        $aggregateFiltered = (clone $query)->getQuery();
+        $filteredTotals = (clone $query)
+            ->reorder()
+            ->selectRaw('COUNT(*) as total_transaksi, COALESCE(SUM(jumlah_retribusi), 0) as total_nominal')
+            ->first();
 
-        $totalNominalFiltered = (float) $aggregateFiltered->sum('jumlah_retribusi');
+        $totalNominalFiltered = (float) $filteredTotals->total_nominal;
+        $totalTransaksiFiltered = (int) $filteredTotals->total_transaksi;
 
-        $totalTransaksiFiltered = (int) $aggregateFiltered->count();
-
-        // Total All-Time Global dari Cache
-        $totalNominalAll = PendapatanCacheHelper::getTotalNominalAll();
-
-        $totalTransaksiAll = PendapatanCacheHelper::getTotalTransaksiAll();
-
-        // Data List Pasars untuk dropdown dari Cache Global Pasar
+        // Pasar operator dibatasi pada pasar yang ditugaskan kepadanya.
         $pasars = PasarsCacheHelper::getAllPasar();
+        if ($this->isOperator()) {
+            $pasars = $user->pasar_id
+                ? $pasars->where('id', $user->pasar_id)->values()
+                : collect();
+        }
 
         // Dapatkan Nama Pasar yang difilter (jika ada)
         $namaPasarTerpilih = null;
@@ -516,29 +610,33 @@ class PendapatanPasarIndex extends Component
         }
 
         // Data Ringkasan Per Pasar dari Cache Global Pendapatan
-        $ringkasanPerPasar = PendapatanCacheHelper::getRingkasanPerPasar();
+        $ringkasanPerPasar = $pasarScope === -1
+            ? collect()
+            : PendapatanCacheHelper::getRingkasanPerPasar($ownerId, $pasarScope);
 
-        // Detail Pasar jika dipilih modal detail
-        $detailPasar = null;
-
+        // Detail memakai ringkasan yang sudah dimuat, tanpa query pasar/agregasi tambahan.
+        $detailPasar = $this->detailPasarId
+            ? $ringkasanPerPasar->firstWhere('id', (int) $this->detailPasarId)
+            : null;
         $detailRiwayat = collect();
 
-        if ($this->detailPasarId) {
-            $detailPasar = Pasar::withSum('pendapatanPasars', 'jumlah_retribusi')
-                ->withCount('pendapatanPasars')
-                ->find($this->detailPasarId);
-
-            if ($detailPasar) {
-                $detailRiwayat = PendapatanPasar::where('pasar_id', $this->detailPasarId)
-                    ->latest('tanggal_penyetoran')
-                    ->latest('id')
-                    ->take(50)
-                    ->get();
-            }
+        if ($detailPasar) {
+            $detailRiwayat = $this->accessiblePendapatanQuery()
+                ->where('pasar_id', $this->detailPasarId)
+                ->latest('tanggal_penyetoran')
+                ->latest('id')
+                ->take(50)
+                ->get();
         }
 
         // List Tahun dari Cache
-        $tahunList = PendapatanCacheHelper::getTahunList();
+        $tahunList = $pasarScope === -1
+            ? [(int) date('Y')]
+            : PendapatanCacheHelper::getTahunList($ownerId, $pasarScope);
+
+        $allTimeTotals = $pasarScope === -1
+            ? ['total_nominal' => 0.0, 'total_transaksi' => 0]
+            : PendapatanCacheHelper::getAllTimeTotals($ownerId, $pasarScope);
 
         return view('livewire.dashboard.pendapatan-pasar-index', [
             'ssrdList'               => $ssrdList,
@@ -547,8 +645,8 @@ class PendapatanPasarIndex extends Component
             'namaPasarTerpilih'      => $namaPasarTerpilih,
             'totalNominalFiltered'   => $totalNominalFiltered,
             'totalTransaksiFiltered' => $totalTransaksiFiltered,
-            'totalNominalAll'        => $totalNominalAll,
-            'totalTransaksiAll'      => $totalTransaksiAll,
+            'totalNominalAll'        => $allTimeTotals['total_nominal'],
+            'totalTransaksiAll'      => $allTimeTotals['total_transaksi'],
             'ringkasanPerPasar'      => $ringkasanPerPasar,
             'detailPasar'            => $detailPasar,
             'detailRiwayat'          => $detailRiwayat,
