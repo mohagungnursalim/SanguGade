@@ -20,6 +20,7 @@ class PendapatanPasar extends Model
         'masa_retribusi',
         'tahun_retribusi',
         'nomor_urut_ssrd',
+        'bukti_ssrd',
         'jenis_retribusi',
         'nomor_ayat',
         'jumlah_retribusi',

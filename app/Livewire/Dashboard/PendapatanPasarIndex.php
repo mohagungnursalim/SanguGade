@@ -7,11 +7,16 @@ use App\Helpers\TerbilangHelper;
 use App\Models\PendapatanPasar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 class PendapatanPasarIndex extends Component
 {
+    use WithFileUploads;
+
     // ─── Filter & Search ──────────────────────────────────────────────────
     public string $search = '';
 
@@ -48,6 +53,7 @@ class PendapatanPasarIndex extends Component
     public string $petugas_bank = '';
     public string $keterangan = '';
     public string $keterangan_lainnya = '';
+    public $bukti_ssrd = null;
 
     // ─── State Form Edit ──────────────────────────────────────────────────
     public ?int $editId = null;
@@ -66,6 +72,8 @@ class PendapatanPasarIndex extends Component
     public string $edit_petugas_bank = '';
     public string $edit_keterangan = '';
     public string $edit_keterangan_lainnya = '';
+    public $edit_bukti_ssrd = null;
+    public ?string $edit_bukti_ssrd_path = null;
 
     // ─── State Modal Detail Pasar ─────────────────────────────────────────
     public bool $showDetailModal = false;
@@ -84,6 +92,18 @@ class PendapatanPasarIndex extends Component
         if ($this->isOperator()) {
             $this->pasar_id = auth()->user()->pasar_id;
         }
+
+        $this->nomor_urut_ssrd = $this->generateNomorUrutSsrD();
+    }
+
+    public function updatedPasarId(): void
+    {
+        $this->nomor_urut_ssrd = $this->generateNomorUrutSsrD();
+    }
+
+    public function updatedTahunSsrd(): void
+    {
+        $this->nomor_urut_ssrd = $this->generateNomorUrutSsrD();
     }
 
     // ─── Load More ────────────────────────────────────────────────────────
@@ -164,6 +184,7 @@ class PendapatanPasarIndex extends Component
             'petugas_bank'       => 'nullable|string|max:150',
             'keterangan'         => 'required|string',
             'keterangan_lainnya' => 'required_if:keterangan,Lainnya|nullable|string',
+            'bukti_ssrd'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 
@@ -220,6 +241,9 @@ class PendapatanPasarIndex extends Component
 
             'keterangan_lainnya.required_if' => 'Keterangan lainnya wajib diisi.',
             'keterangan_lainnya.string' => 'Keterangan lainnya harus berupa teks.',
+            'bukti_ssrd.image' => 'Bukti SSRD harus berupa gambar.',
+            'bukti_ssrd.mimes' => 'Format bukti SSRD harus JPG, JPEG, PNG, atau WEBP.',
+            'bukti_ssrd.max' => 'Ukuran bukti SSRD maksimal 5 MB.',
         ];
     }
 
@@ -241,6 +265,7 @@ class PendapatanPasarIndex extends Component
             'edit_petugas_bank'       => 'nullable|string|max:150',
             'edit_keterangan'         => 'required|string',
             'edit_keterangan_lainnya' => 'required_if:edit_keterangan,Lainnya|nullable|string',
+            'edit_bukti_ssrd'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 
@@ -300,6 +325,9 @@ class PendapatanPasarIndex extends Component
 
             'edit_keterangan_lainnya.required_if' => 'Keterangan lainnya wajib diisi.',
             'edit_keterangan_lainnya.string' => 'Keterangan lainnya harus berupa teks.',
+            'edit_bukti_ssrd.image' => 'Bukti SSRD harus berupa gambar.',
+            'edit_bukti_ssrd.mimes' => 'Format bukti SSRD harus JPG, JPEG, PNG, atau WEBP.',
+            'edit_bukti_ssrd.max' => 'Ukuran bukti SSRD maksimal 5 MB.',
         ];
     }
 
@@ -315,9 +343,13 @@ class PendapatanPasarIndex extends Component
             $this->pasar_id = (int) auth()->user()->pasar_id;
         }
 
+        $this->nomor_urut_ssrd = $this->generateNomorUrutSsrD();
+
         $this->validate($this->createRules(), $this->createMessages());
 
-        DB::transaction(function () {
+        $buktiPath = $this->storeBuktiSsrd($this->bukti_ssrd);
+
+        DB::transaction(function () use ($buktiPath) {
             $terbilangText = TerbilangHelper::make($this->jumlah_retribusi);
 
             PendapatanPasar::create([
@@ -338,6 +370,7 @@ class PendapatanPasarIndex extends Component
                 'keterangan'         => $this->keterangan === 'Lainnya'
                     ? $this->keterangan_lainnya
                     : $this->keterangan,
+                'bukti_ssrd'         => $buktiPath,
             ]);
         });
 
@@ -359,9 +392,16 @@ class PendapatanPasarIndex extends Component
             $this->edit_pasar_id = (int) auth()->user()->pasar_id;
         }
 
+        $this->edit_nomor_urut_ssrd = $this->edit_nomor_urut_ssrd ?: $this->generateNomorUrutSsrD($this->edit_pasar_id, $this->edit_tahun_ssrd);
+
         $this->validate($this->editRules(), $this->editMessages());
 
-        DB::transaction(function () use ($item) {
+        $oldBuktiPath = $item->bukti_ssrd;
+        $buktiPath = $this->edit_bukti_ssrd
+            ? $this->storeBuktiSsrd($this->edit_bukti_ssrd)
+            : $oldBuktiPath;
+
+        DB::transaction(function () use ($item, $buktiPath) {
             $terbilangText = TerbilangHelper::make($this->edit_jumlah_retribusi);
 
             $item->update([
@@ -381,8 +421,13 @@ class PendapatanPasarIndex extends Component
                 'keterangan'         => $this->edit_keterangan === 'Lainnya'
                     ? $this->edit_keterangan_lainnya
                     : $this->edit_keterangan,
+                'bukti_ssrd'         => $buktiPath,
             ]);
         });
+
+        if ($this->edit_bukti_ssrd && $oldBuktiPath) {
+            Storage::disk('public')->delete($oldBuktiPath);
+        }
 
         $this->resetEditForm();
         PendapatanCacheHelper::refreshAll();
@@ -409,10 +454,17 @@ class PendapatanPasarIndex extends Component
         abort_if(!auth()->user()->can('delete'), 403, 'Anda tidak memiliki hak akses untuk menghapus data SSRD.');
 
         if ($this->deleteId) {
+            $item = $this->accessiblePendapatanQuery()->findOrFail($this->deleteId);
+            $buktiPath = $item->bukti_ssrd;
+
             DB::transaction(function () {
                 $item = $this->accessiblePendapatanQuery()->findOrFail($this->deleteId);
                 $item->delete();
             });
+
+            if ($buktiPath) {
+                Storage::disk('public')->delete($buktiPath);
+            }
 
             $this->reset(['deleteId', 'deleteInfo', 'showDeleteModal']);
 
@@ -438,6 +490,16 @@ class PendapatanPasarIndex extends Component
         $this->detailPasarId = null;
     }
 
+    public function removeBuktiSsrd(): void
+    {
+        $this->bukti_ssrd = null;
+    }
+
+    public function removeEditBuktiSsrd(): void
+    {
+        $this->edit_bukti_ssrd = null;
+    }
+
     // ─── Reset Forms ──────────────────────────────────────────────────────
 
     private function resetCreateForm(): void
@@ -447,7 +509,8 @@ class PendapatanPasarIndex extends Component
         $this->reset([
             'pasar_id', 'no_rekening_bank', 'masa_retribusi',
             'nomor_urut_ssrd', 'nomor_ayat', 'jumlah_retribusi',
-            'nama_penyetor', 'petugas_bank', 'keterangan', 'keterangan_lainnya'
+            'nama_penyetor', 'petugas_bank', 'keterangan', 'keterangan_lainnya',
+            'bukti_ssrd'
         ]);
 
         $this->tahun_ssrd = $currentYear;
@@ -459,6 +522,7 @@ class PendapatanPasarIndex extends Component
             $this->pasar_id = auth()->user()->pasar_id;
         }
 
+        $this->nomor_urut_ssrd = $this->generateNomorUrutSsrD();
         $this->resetValidation();
     }
 
@@ -469,12 +533,58 @@ class PendapatanPasarIndex extends Component
             'edit_masa_retribusi', 'edit_tahun_retribusi', 'edit_nomor_urut_ssrd',
             'edit_nomor_ayat', 'edit_jumlah_retribusi', 'edit_terbilang',
             'edit_tanggal_penyetoran', 'edit_nama_penyetor', 'edit_petugas_bank',
-            'edit_keterangan', 'edit_keterangan_lainnya'
+            'edit_keterangan', 'edit_keterangan_lainnya',
+            'edit_bukti_ssrd', 'edit_bukti_ssrd_path'
         ]);
 
         $this->edit_jenis_retribusi = 'SKRD';
 
         $this->resetValidation();
+    }
+
+    private function storeBuktiSsrd(?TemporaryUploadedFile $file): ?string
+    {
+        if (!$file) {
+            return null;
+        }
+
+        $path = $file->store('pendapatan-pasar', 'public');
+
+        if (!$path) {
+            throw new \RuntimeException('Gagal menyimpan file bukti SSRD.');
+        }
+
+        return $path;
+    }
+
+    private function generateNomorUrutSsrD(?int $pasarId = null, ?int $tahunSsrd = null): string
+    {
+        $pasarId ??= $this->pasar_id;
+        $tahunSsrd ??= $this->tahun_ssrd;
+
+        if (!$pasarId || !$tahunSsrd) {
+            return '';
+        }
+
+        $maxSequence = 0;
+
+        $records = PendapatanPasar::query()
+            ->where('pasar_id', $pasarId)
+            ->where('tahun_ssrd', $tahunSsrd)
+            ->whereNotNull('nomor_urut_ssrd')
+            ->where('nomor_urut_ssrd', '!=', '')
+            ->select('nomor_urut_ssrd')
+            ->get();
+
+        foreach ($records as $record) {
+            $nomor = trim((string) $record->nomor_urut_ssrd);
+
+            if (preg_match('/^(\d+)\b/', $nomor, $matches)) {
+                $maxSequence = max($maxSequence, (int) $matches[1]);
+            }
+        }
+
+        return sprintf('%03d/SSRD/%d', $maxSequence + 1, $tahunSsrd);
     }
 
     private function accessiblePendapatanQuery(): Builder

@@ -8,6 +8,8 @@ use App\Models\Pasar;
 use App\Models\PendapatanPasar;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -77,6 +79,7 @@ class PendapatanPasarTest extends TestCase
     public function test_can_create_ssrd_record(): void
     {
         $customKeterangan = str_repeat('Keterangan bebas ', 40);
+        Storage::fake('public');
 
         Livewire::actingAs($this->adminUser)
             ->test(PendapatanPasarIndex::class)
@@ -94,10 +97,12 @@ class PendapatanPasarTest extends TestCase
             ->set('petugas_bank', 'Budi Teller BJB')
             ->set('keterangan', 'Lainnya')
             ->set('keterangan_lainnya', $customKeterangan)
+            ->set('bukti_ssrd', UploadedFile::fake()->image('bukti-ssrd.jpg'))
             ->call('store')
             ->assertDispatched('ssrd-saved')
             ->assertDispatched('notify');
 
+        $ssrd = PendapatanPasar::firstOrFail();
         $this->assertDatabaseHas('pendapatan_pasars', [
             'pasar_id'         => $this->pasar->id,
             'user_id'          => $this->adminUser->id,
@@ -106,10 +111,35 @@ class PendapatanPasarTest extends TestCase
             'nama_penyetor'    => 'Ahmad Pedagang',
             'keterangan'       => $customKeterangan,
         ]);
+        $this->assertNotNull($ssrd->bukti_ssrd);
+        Storage::disk('public')->assertExists($ssrd->bukti_ssrd);
+    }
+
+    public function test_ssrd_upload_rejects_images_larger_than_five_megabytes(): void
+    {
+        Storage::fake('public');
+
+        Livewire::actingAs($this->adminUser)
+            ->test(PendapatanPasarIndex::class)
+            ->set('pasar_id', $this->pasar->id)
+            ->set('tahun_ssrd', 2026)
+            ->set('tahun_retribusi', 2026)
+            ->set('jumlah_retribusi', 1000)
+            ->set('tanggal_penyetoran', '2026-10-15')
+            ->set('nama_penyetor', 'Ahmad')
+            ->set('keterangan', 'Ret. Harian')
+            ->set('bukti_ssrd', UploadedFile::fake()->image('terlalu-besar.jpg')->size(5121))
+            ->call('store')
+            ->assertHasErrors(['bukti_ssrd' => 'max']);
+
+        $this->assertDatabaseCount('pendapatan_pasars', 0);
     }
 
     public function test_can_update_ssrd_record(): void
     {
+        Storage::fake('public');
+        Storage::disk('public')->put('pendapatan-pasar/bukti-lama.jpg', 'old image');
+
         $ssrd = PendapatanPasar::create([
             'pasar_id'           => $this->pasar->id,
             'tahun_ssrd'         => 2026,
@@ -124,6 +154,7 @@ class PendapatanPasarTest extends TestCase
             'tanggal_penyetoran' => '2026-09-10',
             'nama_penyetor'      => 'Siti Hawa',
             'petugas_bank'       => 'Teller 1',
+            'bukti_ssrd'         => 'pendapatan-pasar/bukti-lama.jpg',
         ]);
 
         Livewire::actingAs($this->adminUser)
@@ -143,10 +174,12 @@ class PendapatanPasarTest extends TestCase
             ->set('edit_petugas_bank', 'Teller 2')
             ->set('edit_keterangan', 'Lainnya')
             ->set('edit_keterangan_lainnya', 'Keterangan bebas saat mengedit')
+            ->set('edit_bukti_ssrd', UploadedFile::fake()->image('bukti-baru.jpg'))
             ->call('update')
             ->assertDispatched('ssrd-updated')
             ->assertDispatched('notify');
 
+        $ssrd->refresh();
         $this->assertDatabaseHas('pendapatan_pasars', [
             'id'               => $ssrd->id,
             'nomor_urut_ssrd'  => '002/SSRD/2026-REV',
@@ -155,6 +188,9 @@ class PendapatanPasarTest extends TestCase
             'nama_penyetor'    => 'Siti Hawa Updated',
             'keterangan'       => 'Keterangan bebas saat mengedit',
         ]);
+        $this->assertNotSame('pendapatan-pasar/bukti-lama.jpg', $ssrd->bukti_ssrd);
+        Storage::disk('public')->assertExists($ssrd->bukti_ssrd);
+        Storage::disk('public')->assertMissing('pendapatan-pasar/bukti-lama.jpg');
     }
 
     public function test_can_delete_ssrd_record(): void

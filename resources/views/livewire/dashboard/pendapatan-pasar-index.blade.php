@@ -5,6 +5,7 @@
     @ssrd-saved.window="closeModal()"
     @ssrd-updated.window="closeModal()"
     @notify.window="showNotify($event.detail)"
+    @keydown.escape.window="closeTopModal()"
 >
 
     {{-- =====================================================================
@@ -549,7 +550,14 @@
             {{-- ─── FORM CREATE ──────────────────────────────────────────── --}}
             @can('create')
             <div x-show="mode === 'create'">
-                <form wire:submit.prevent="store" class="p-6 space-y-5">
+                <form
+                    wire:submit.prevent="store"
+                    x-data="{ uploadProgress: 0, isUploading: false }"
+                    x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
+                    x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
+                    x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
+                    x-on:livewire-upload-error="isUploading = false; uploadProgress = 0"
+                    class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR --}}
                     <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
@@ -613,9 +621,11 @@
                                 <input
                                     wire:model.defer="nomor_urut_ssrd"
                                     type="text"
+                                    readonly
                                     placeholder="Contoh: 0045/SSRD/2026"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 read-only:cursor-default"
                                 />
+                                <p class="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Nomor akan dibuat otomatis berdasarkan pasar dan tahun SSRD.</p>
                                 @error('nomor_urut_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -785,6 +795,75 @@
                                 @error('petugas_bank') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
 
+                            {{-- Bukti SSRD --}}
+                            <div class="sm:col-span-3">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Foto Bukti SSRD</label>
+                                <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-emerald-400 transition">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        x-ref="buktiSsrdInput"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        x-on:change="
+                                            const file = $event.target.files[0];
+                                            const input = $event.target;
+                                            if (!file) return;
+
+                                            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                                            if (!allowedTypes.includes(file.type)) {
+                                                $event.target.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'File harus berupa gambar JPG, PNG, atau WEBP.' });
+                                                return;
+                                            }
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                $event.target.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'Ukuran gambar maksimal 5 MB.' });
+                                                return;
+                                            }
+
+                                            isUploading = true;
+                                            uploadProgress = 0;
+                                            $wire.upload('bukti_ssrd', file, () => {
+                                                isUploading = false;
+                                                input.value = '';
+                                            }, () => {
+                                                isUploading = false;
+                                                uploadProgress = 0;
+                                                input.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'Gagal mengunggah bukti SSRD.' });
+                                            }, (event) => {
+                                                uploadProgress = event.detail.progress;
+                                            });
+                                        "
+                                    />
+                                    <div x-show="!isUploading">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 dark:text-gray-500 mb-1"></i>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Klik untuk memilih foto bukti SSRD</p>
+                                        <p class="text-[10px] text-gray-400 dark:text-gray-500">JPG, PNG, WEBP — maksimal 5 MB</p>
+                                    </div>
+                                    <div x-show="isUploading" x-cloak class="flex items-center justify-center gap-2 text-emerald-600 text-xs py-2">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Mengunggah... <span x-text="uploadProgress"></span>%
+                                    </div>
+                                </div>
+                                <div x-show="isUploading && uploadProgress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div
+                                        class="h-1.5 rounded-full transition-all duration-75"
+                                        :class="uploadProgress < 100 ? 'bg-emerald-500' : 'bg-green-500'"
+                                        :style="'width:' + uploadProgress + '%'"
+                                    ></div>
+                                </div>
+                                @if ($bukti_ssrd)
+                                    <div class="mt-3 flex items-center gap-3">
+                                        <img src="{{ $bukti_ssrd->temporaryUrl() }}" alt="Preview bukti SSRD" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                        <button type="button" wire:click="removeBuktiSsrd" @click="$refs.buktiSsrdInput.value = ''" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                            <i class="fas fa-trash"></i> Hapus foto
+                                        </button>
+                                    </div>
+                                @endif
+                                @error('bukti_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                            </div>
+
                             {{-- Keterangan --}}
                             <div class="sm:col-span-3" x-data="{ keterangan: @entangle('keterangan').live }">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -833,6 +912,7 @@
                             type="submit"
                             wire:loading.attr="disabled"
                             wire:target="store"
+                            :disabled="isUploading"
                             class="px-6 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed min-w-[120px]"
                         >
                             <span wire:loading.remove wire:target="store">
@@ -850,7 +930,14 @@
             {{-- ─── FORM EDIT ──────────────────────────────────────────────── --}}
             @can('update')
             <div x-show="mode === 'edit'">
-                <form wire:submit.prevent="update" class="p-6 space-y-5">
+                <form
+                    wire:submit.prevent="update"
+                    x-data="{ uploadProgress: 0, isUploading: false }"
+                    x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
+                    x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
+                    x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
+                    x-on:livewire-upload-error="isUploading = false; uploadProgress = 0"
+                    class="p-6 space-y-5">
                     {{-- 1. IDENTITAS SSRD & PASAR (EDIT) --}}
                     <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
@@ -910,8 +997,10 @@
                                 <input
                                     wire:model.defer="edit_nomor_urut_ssrd"
                                     type="text"
-                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+                                    readonly
+                                    class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 read-only:cursor-default"
                                 />
+                                <p class="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Nomor diambil dari data yang sudah tersimpan.</p>
                                 @error('edit_nomor_urut_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -1067,6 +1156,80 @@
                                 @error('edit_petugas_bank') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
 
+                            {{-- Bukti SSRD --}}
+                            <div class="sm:col-span-3">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Foto Bukti SSRD</label>
+                                @if ($edit_bukti_ssrd)
+                                    <div class="mb-3 flex items-center gap-3">
+                                        <img src="{{ $edit_bukti_ssrd->temporaryUrl() }}" alt="Preview bukti SSRD" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                        <button type="button" wire:click="removeEditBuktiSsrd" @click="$refs.editBuktiSsrdInput.value = ''" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                            <i class="fas fa-trash"></i> Hapus foto baru
+                                        </button>
+                                    </div>
+                                @elseif ($edit_bukti_ssrd_path)
+                                    <div class="mb-3 flex items-center gap-3">
+                                        <img src="{{ asset('storage/' . $edit_bukti_ssrd_path) }}" alt="Foto bukti SSRD saat ini" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Foto saat ini. Unggah file baru untuk menggantinya.</p>
+                                    </div>
+                                @endif
+                                <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-amber-400 transition">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        x-ref="editBuktiSsrdInput"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        x-on:change="
+                                            const file = $event.target.files[0];
+                                            const input = $event.target;
+                                            if (!file) return;
+
+                                            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                                            if (!allowedTypes.includes(file.type)) {
+                                                $event.target.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'File harus berupa gambar JPG, PNG, atau WEBP.' });
+                                                return;
+                                            }
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                $event.target.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'Ukuran gambar maksimal 5 MB.' });
+                                                return;
+                                            }
+
+                                            isUploading = true;
+                                            uploadProgress = 0;
+                                            $wire.upload('edit_bukti_ssrd', file, () => {
+                                                isUploading = false;
+                                                input.value = '';
+                                            }, () => {
+                                                isUploading = false;
+                                                uploadProgress = 0;
+                                                input.value = '';
+                                                $dispatch('notify', { type: 'error', message: 'Gagal mengunggah bukti SSRD.' });
+                                            }, (event) => {
+                                                uploadProgress = event.detail.progress;
+                                            });
+                                        "
+                                    />
+                                    <div x-show="!isUploading">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 dark:text-gray-500 mb-1"></i>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Klik untuk memilih atau mengganti foto</p>
+                                        <p class="text-[10px] text-gray-400 dark:text-gray-500">JPG, PNG, WEBP — maksimal 5 MB</p>
+                                    </div>
+                                    <div x-show="isUploading" x-cloak class="flex items-center justify-center gap-2 text-amber-600 text-xs py-2">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Mengunggah... <span x-text="uploadProgress"></span>%
+                                    </div>
+                                </div>
+                                <div x-show="isUploading && uploadProgress > 0" class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div
+                                        class="h-1.5 rounded-full transition-all duration-75"
+                                        :class="uploadProgress < 100 ? 'bg-amber-500' : 'bg-green-500'"
+                                        :style="'width:' + uploadProgress + '%'"
+                                    ></div>
+                                </div>
+                                @error('edit_bukti_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                            </div>
+
                            <div class="sm:col-span-3" x-data="{ keterangan: @entangle('edit_keterangan').live }">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Keterangan Tambahan
@@ -1111,6 +1274,7 @@
                             type="submit"
                             wire:loading.attr="disabled"
                             wire:target="update"
+                            :disabled="isUploading"
                             class="px-6 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow transition disabled:opacity-70 disabled:cursor-not-allowed min-w-[120px]"
                         >
                             <span wire:loading.remove wire:target="update">
@@ -1133,6 +1297,7 @@
     @can('read')
     <div
         x-show="detailItem !== null"
+        @click.self="closeDetail()"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -1140,23 +1305,23 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
     >
         <div
-            class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            class="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {{-- Header SSRD Receipt --}}
-            <div class="bg-white dark:bg-gray-800 text-white p-5 border-b border-gray-700 flex items-center justify-between">
+            <div class="shrink-0 bg-white dark:bg-gray-800 text-white p-5 border-b border-gray-700 flex items-center justify-between">
                 <div>
                     <span class="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-semibold">Salinan Tanda Bukti Penyetoran</span>
                     <h3 class="text-base font-bold text-gray-900 dark:text-white">SURAT SETORAN RETRIBUSI DAERAH (SSRD)</h3>
                 </div>
-                <button type="button" @click="detailItem = null" class="text-gray-600 hover:text-gray-400 transition">
+                <button type="button" @click="closeDetail()" class="text-gray-600 hover:text-gray-400 transition" aria-label="Tutup detail SSRD">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
 
             <template x-if="detailItem">
-                <div class="p-6 space-y-4 text-xs text-gray-800 dark:text-gray-200">
+                <div class="p-6 space-y-4 text-xs text-gray-800 dark:text-gray-200 overflow-y-auto">
                     <div class="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                         <div>
                             <span class="text-gray-400 text-[10px] block uppercase font-bold">Pasar:</span>
@@ -1205,6 +1370,25 @@
                         </div>
                     </div>
 
+                    <template x-if="detailItem.bukti_ssrd">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-2">Foto Bukti SSRD:</span>
+                            <button
+                                type="button"
+                                @click="openImagePreview(detailItem.bukti_ssrd)"
+                                class="block cursor-zoom-in rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                aria-label="Perbesar foto bukti SSRD"
+                            >
+                                <img
+                                    :src="storageUrl(detailItem.bukti_ssrd)"
+                                    alt="Foto bukti SSRD"
+                                    class="max-h-64 max-w-full object-contain rounded-lg border border-gray-200 dark:border-gray-600 hover:opacity-90 transition"
+                                />
+                            </button>
+                            <p class="mt-1 text-[10px] text-gray-400">Klik foto untuk memperbesar.</p>
+                        </div>
+                    </template>
+
                     <div class="grid grid-cols-2 gap-4 pt-2">
                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
                             <span class="text-gray-400 text-[10px] block uppercase font-bold">Penyetor:</span>
@@ -1225,13 +1409,46 @@
             </template>
 
             <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 flex justify-center">
-                <button type="button" @click="detailItem = null" class="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 rounded-lg transition">
+                <button type="button" @click="closeDetail()" class="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 rounded-lg transition">
                     Tutup
                 </button>
             </div>
         </div>
     </div>
     @endcan
+
+    {{-- Modal preview foto bukti SSRD --}}
+    <div
+        x-show="imagePreviewOpen"
+        @click.self="closeImagePreview()"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Preview foto bukti SSRD"
+    >
+        <div class="relative flex max-h-full max-w-full flex-col items-center">
+            <button
+                type="button"
+                @click="closeImagePreview()"
+                class="absolute -right-3 -top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg hover:bg-gray-100"
+                aria-label="Tutup preview foto"
+            >
+                <i class="fas fa-times"></i>
+            </button>
+            <img
+                :src="imagePreviewSrc"
+                alt="Preview foto bukti SSRD"
+                class="max-h-[85vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+            />
+        </div>
+    </div>
 
     {{-- =====================================================================
          MODAL DETAIL PASAR & RIWAYAT SSRD (DETAIL BERDASARKAN PASAR)
@@ -1400,6 +1617,8 @@ function ssrdManager() {
         modalOpen: false,
         mode: 'create', // 'create' | 'edit'
         detailItem: null,
+        imagePreviewOpen: false,
+        imagePreviewSrc: '',
 
         // State input nominal & terbilang di sisi klien
         formCreate: {
@@ -1424,7 +1643,7 @@ function ssrdManager() {
             this.$wire.set('jumlah_retribusi', 0);
             this.$wire.set('terbilang', 'Nol Rupiah');
             this.modalOpen = true;
-            document.body.classList.add('overflow-hidden');
+            this.syncBodyScroll();
         },
 
         openEditModal(item) {
@@ -1446,6 +1665,8 @@ function ssrdManager() {
             this.$wire.set('edit_nomor_ayat', item.nomor_ayat || '');
             this.$wire.set('edit_jumlah_retribusi', this.formEdit.jumlah);
             this.$wire.set('edit_terbilang', this.formEdit.terbilang);
+            this.$wire.set('edit_bukti_ssrd', null);
+            this.$wire.set('edit_bukti_ssrd_path', item.bukti_ssrd || null);
 
             let tgl = '';
             if (item.tanggal_penyetoran) {
@@ -1466,16 +1687,56 @@ function ssrdManager() {
             this.$wire.set('edit_keterangan_lainnya', isCustomKeterangan ? item.keterangan : '');
 
             this.modalOpen = true;
-            document.body.classList.add('overflow-hidden');
+            this.syncBodyScroll();
         },
 
         closeModal() {
             this.modalOpen = false;
-            document.body.classList.remove('overflow-hidden');
+            this.syncBodyScroll();
         },
 
         viewDetail(item) {
             this.detailItem = item;
+            this.syncBodyScroll();
+        },
+
+        closeDetail() {
+            this.detailItem = null;
+            this.syncBodyScroll();
+        },
+
+        openImagePreview(path) {
+            if (!path) return;
+
+            this.imagePreviewSrc = this.storageUrl(path);
+            this.imagePreviewOpen = true;
+            this.syncBodyScroll();
+        },
+
+        closeImagePreview() {
+            this.imagePreviewOpen = false;
+            this.imagePreviewSrc = '';
+            this.syncBodyScroll();
+        },
+
+        closeTopModal() {
+            if (this.imagePreviewOpen) {
+                this.closeImagePreview();
+            } else if (this.detailItem !== null) {
+                this.closeDetail();
+            } else if (this.modalOpen) {
+                this.closeModal();
+            }
+        },
+
+        syncBodyScroll() {
+            const hasOpenModal = this.modalOpen || this.detailItem !== null || this.imagePreviewOpen;
+            document.body.classList.toggle('overflow-hidden', hasOpenModal);
+        },
+
+        storageUrl(path) {
+            const encodedPath = String(path).split('/').map(encodeURIComponent).join('/');
+            return '{{ asset('storage') }}/' + encodedPath;
         },
 
         onJumlahChange(targetMode) {
