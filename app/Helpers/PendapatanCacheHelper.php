@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\Pasar;
 use App\Models\PendapatanPasar;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +32,22 @@ class PendapatanCacheHelper
     protected static function vKey(string $suffix): string
     {
         return self::$baseKey . ':v' . self::version() . ':' . $suffix;
+    }
+
+    protected static function scopeSuffix(?int $userId, ?int $pasarId): string
+    {
+        return 'user_' . ($userId ?? 'all') . '_pasar_' . ($pasarId ?? 'all');
+    }
+
+    protected static function applyScope(Builder $query, ?int $userId, ?int $pasarId): void
+    {
+        if ($userId !== null) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($pasarId !== null) {
+            $query->where('pasar_id', $pasarId);
+        }
     }
 
     /**
@@ -61,24 +78,41 @@ class PendapatanCacheHelper
     /**
      * Ambil total akumulasi pendapatan global (all-time)
      */
-    public static function getTotalNominalAll(): float
+    public static function getTotalNominalAll(?int $userId = null, ?int $pasarId = null): float
     {
-        return (float) Cache::remember(
-            self::vKey('total_nominal_all'),
-            self::$ttl,
-            fn () => PendapatanPasar::sum('jumlah_retribusi')
-        );
+        return self::getAllTimeTotals($userId, $pasarId)['total_nominal'];
     }
 
     /**
      * Ambil total jumlah transaksi SSRD global (all-time)
      */
-    public static function getTotalTransaksiAll(): int
+    public static function getTotalTransaksiAll(?int $userId = null, ?int $pasarId = null): int
     {
-        return (int) Cache::remember(
-            self::vKey('total_transaksi_all'),
+        return self::getAllTimeTotals($userId, $pasarId)['total_transaksi'];
+    }
+
+    /**
+     * Ambil total nominal dan transaksi dalam satu query cached.
+     *
+     * @return array{total_nominal: float, total_transaksi: int}
+     */
+    public static function getAllTimeTotals(?int $userId = null, ?int $pasarId = null): array
+    {
+        return Cache::remember(
+            self::vKey('all_time_totals_' . self::scopeSuffix($userId, $pasarId)),
             self::$ttl,
-            fn () => PendapatanPasar::count()
+            function () use ($userId, $pasarId) {
+                $query = PendapatanPasar::query()
+                    ->selectRaw('COALESCE(SUM(jumlah_retribusi), 0) as total_nominal, COUNT(*) as total_transaksi');
+                self::applyScope($query, $userId, $pasarId);
+
+                $totals = $query->first();
+
+                return [
+                    'total_nominal' => (float) $totals->total_nominal,
+                    'total_transaksi' => (int) $totals->total_transaksi,
+                ];
+            }
         );
     }
 
@@ -154,12 +188,35 @@ class PendapatanCacheHelper
     /**
      * Ambil rekapitulasi ringkasan per pasar (cached)
      */
-    public static function getRingkasanPerPasar()
+    public static function getRingkasanPerPasar(?int $userId = null, ?int $pasarId = null)
     {
-        return Cache::remember(self::vKey('ringkasan_per_pasar'), self::$ttl, function () {
-            return Pasar::select('id', 'nama_pasar', 'kecamatan', 'kelurahan', 'status_pasar')
-                ->withCount('pendapatanPasars')
-                ->withSum('pendapatanPasars', 'jumlah_retribusi')
+        $suffix = self::scopeSuffix($userId, $pasarId);
+
+        return Cache::remember(self::vKey('ringkasan_per_pasar_' . $suffix), self::$ttl, function () use ($userId, $pasarId) {
+            $totals = PendapatanPasar::query()
+                ->selectRaw('pasar_id, COUNT(*) as pendapatan_pasars_count, SUM(jumlah_retribusi) as pendapatan_pasars_sum_jumlah_retribusi')
+                ->groupBy('pasar_id');
+            self::applyScope($totals, $userId, $pasarId);
+
+            $query = Pasar::query()
+                ->leftJoinSub($totals, 'pendapatan_totals', function ($join) {
+                    $join->on('pasars.id', '=', 'pendapatan_totals.pasar_id');
+                })
+                ->select([
+                    'pasars.id',
+                    'pasars.nama_pasar',
+                    'pasars.kecamatan',
+                    'pasars.kelurahan',
+                    'pasars.status_pasar',
+                ])
+                ->selectRaw('COALESCE(pendapatan_totals.pendapatan_pasars_count, 0) as pendapatan_pasars_count')
+                ->selectRaw('COALESCE(pendapatan_totals.pendapatan_pasars_sum_jumlah_retribusi, 0) as pendapatan_pasars_sum_jumlah_retribusi');
+
+            if ($userId !== null || $pasarId !== null) {
+                $query->whereNotNull('pendapatan_totals.pasar_id');
+            }
+
+            return $query
                 ->orderByDesc('pendapatan_pasars_sum_jumlah_retribusi')
                 ->get();
         });
@@ -168,10 +225,15 @@ class PendapatanCacheHelper
     /**
      * Ambil daftar tahun unik yang tersedia
      */
-    public static function getTahunList(): array
+    public static function getTahunList(?int $userId = null, ?int $pasarId = null): array
     {
-        return Cache::remember(self::vKey('tahun_list'), self::$ttl, function () {
-            $list = PendapatanPasar::selectRaw('DISTINCT tahun_retribusi AS th')
+        $suffix = self::scopeSuffix($userId, $pasarId);
+
+        return Cache::remember(self::vKey('tahun_list_' . $suffix), self::$ttl, function () use ($userId, $pasarId) {
+            $query = PendapatanPasar::selectRaw('DISTINCT tahun_retribusi AS th');
+            self::applyScope($query, $userId, $pasarId);
+
+            $list = $query
                 ->orderByDesc('th')
                 ->pluck('th')
                 ->filter()
@@ -330,8 +392,7 @@ class PendapatanCacheHelper
         self::invalidate();
 
         // Pre-warm entry yang paling sering diakses
-        self::getTotalNominalAll();
-        self::getTotalTransaksiAll();
+        self::getAllTimeTotals();
         self::getRingkasanPerPasar();
         self::getTahunList();
     }
