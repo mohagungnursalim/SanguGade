@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\CkeditorController;
 use App\Livewire\Dashboard\Categories;
 use App\Livewire\Dashboard\Dashboard;
+use App\Livewire\Dashboard\DataPedagang;
 use App\Livewire\Dashboard\PendapatanPasarIndex;
 use App\Livewire\Dashboard\Posts;
 use App\Livewire\Dashboard\PostsCreate;
@@ -92,9 +93,10 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth'])->group(func
     // Route::get('/tags', Tags::class)->name('tags');
     // Route::get('/categories', Categories::class)->name('categories');
 
-    // ========= Sarana Prasarana & Pendapatan Pasar ==========
+    // ========= Sarana Prasarana & Pendapatan Pasar & Data Pedagang ==========
     Route::get('/sarana-prasarana', SaranaPrasarana::class)->name('sarana-prasarana');
     Route::get('/pendapatan-pasar', PendapatanPasarIndex::class)->name('pendapatan-pasar');
+    Route::get('/data-pedagang', DataPedagang::class)->name('data-pedagang');
 
         /**
          * SETTINGS (Hanya bisa diakses oleh role admin)

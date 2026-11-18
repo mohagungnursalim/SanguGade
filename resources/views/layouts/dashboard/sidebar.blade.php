@@ -66,10 +66,14 @@
                          </a>
                      </li>
                      <li>
-                        <a aria-disabled="true" tabindex="-1" class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group text-gray-400 dark:text-white opacity-50 cursor-not-allowed">
-                            <i class="fa-solid fa-arrow-right"></i>
-                            <span class="ml-2">Data Pedagang</span>
-                        </a>
+                         <a wire:navigate href="{{ route('dashboard.data-pedagang') }}"
+                             class="flex items-center w-full p-2 rounded-lg pl-11 transition duration-75 group
+                            text-gray-900 dark:text-white
+                            hover:bg-gray-100 dark:hover:bg-gray-700
+                            {{ request()->routeIs('dashboard.data-pedagang') ? 'bg-gray-200 dark:bg-gray-600' : '' }}">
+                             <i class="fa-solid fa-arrow-right"></i>
+                             <span class="ml-2">Data Pedagang</span>
+                         </a>
                      </li>
 
                  </ul>

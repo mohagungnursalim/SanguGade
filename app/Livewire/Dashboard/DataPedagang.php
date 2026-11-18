@@ -2,12 +2,302 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Helpers\PasarsCacheHelper;
+use App\Helpers\PedagangCacheHelper;
+use App\Jobs\ExportPedagangJob;
+use App\Jobs\ImportPedagangJob;
+use App\Models\Pedagang;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class DataPedagang extends Component
 {
+    use WithFileUploads;
+
+    public ?int $selectedPasarId = null;
+    public string $search = '';
+
+    // Form attributes
+    public ?int $pedagangId = null;
+    public string $nama = '';
+    public string $nik = '';
+    public string $alamat = '';
+    public string $jenis_sarana = '';
+    public $ukuran = '';
+    public $tarif_per_meter = '';
+    public $tarif_bulanan = '';
+    public string $jenis_usaha = '';
+    public $latitude = '';
+    public $longitude = '';
+    public string $alamat_usaha = '';
+    public ?int $pasar_id = null;
+
+    // Delete target
+    public ?int $deleteId = null;
+    public string $deleteName = '';
+
+    // Import file
+    public $csvFile = null;
+
+    // Export tracking
+    public ?string $lastExportFile = null;
+
+    protected function rules(): array
+    {
+        return [
+            'nama' => 'required|string|max:255',
+            'nik' => 'nullable|string|max:20|unique:pedagangs,nik,' . $this->pedagangId,
+            'alamat' => 'nullable|string|max:1000',
+            'jenis_sarana' => 'required|string|max:100',
+            'ukuran' => 'nullable|numeric|min:0',
+            'tarif_per_meter' => 'nullable|numeric|min:0',
+            'tarif_bulanan' => 'nullable|numeric|min:0',
+            'jenis_usaha' => 'required|string|max:100',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'alamat_usaha' => 'nullable|string|max:1000',
+            'pasar_id' => 'required|exists:pasars,id',
+        ];
+    }
+
+    protected $messages = [
+        'nama.required' => 'Nama pedagang wajib diisi.',
+        'nik.unique' => 'NIK sudah terdaftar.',
+        'jenis_sarana.required' => 'Jenis sarana wajib diisi.',
+        'jenis_usaha.required' => 'Jenis usaha wajib diisi.',
+        'pasar_id.required' => 'Pilih pasar lokasi pedagang.',
+        'pasar_id.exists' => 'Pasar tidak valid.',
+    ];
+
+    public function mount()
+    {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('admin') && $user->pasar_id) {
+            $this->selectedPasarId = $user->pasar_id;
+            $this->pasar_id = $user->pasar_id;
+        }
+    }
+
+    public function calculateTarifBulanan(): void
+    {
+        $uk = (float)($this->ukuran ?: 0);
+        $tpm = (float)($this->tarif_per_meter ?: 0);
+        if ($uk > 0 && $tpm > 0) {
+            $this->tarif_bulanan = $uk * $tpm;
+        }
+    }
+
+    public function save(): void
+    {
+        $user = auth()->user();
+        abort_if(!$user->can('create') && !$user->can('update'), 403, 'Akses tidak diizinkan.');
+
+        if ($this->pedagangId) {
+            abort_if(!$user->can('update'), 403, 'Tidak memiliki izin update.');
+            if (!$user->hasRole('admin') && $user->pasar_id) {
+                $existing = Pedagang::findOrFail($this->pedagangId);
+                abort_if($user->pasar_id !== $existing->pasar_id, 403, 'Hanya dapat mengubah pedagang di pasar Anda.');
+                $this->pasar_id = $user->pasar_id;
+            }
+        } else {
+            abort_if(!$user->can('create'), 403, 'Tidak memiliki izin create.');
+            if (!$user->hasRole('admin') && $user->pasar_id) {
+                $this->pasar_id = $user->pasar_id;
+            }
+        }
+
+        $this->calculateTarifBulanan();
+        $this->validate();
+
+        $data = [
+            'nama' => $this->nama,
+            'nik' => $this->nik ?: null,
+            'alamat' => $this->alamat ?: null,
+            'jenis_sarana' => $this->jenis_sarana,
+            'ukuran' => $this->ukuran !== '' ? (float)$this->ukuran : 0,
+            'tarif_per_meter' => $this->tarif_per_meter !== '' ? (float)$this->tarif_per_meter : 0,
+            'tarif_bulanan' => $this->tarif_bulanan !== '' ? (float)$this->tarif_bulanan : 0,
+            'jenis_usaha' => $this->jenis_usaha,
+            'latitude' => $this->latitude !== '' ? (float)$this->latitude : null,
+            'longitude' => $this->longitude !== '' ? (float)$this->longitude : null,
+            'alamat_usaha' => $this->alamat_usaha ?: null,
+            'pasar_id' => $this->pasar_id,
+        ];
+
+        Pedagang::updateOrCreate(['id' => $this->pedagangId], $data);
+        PedagangCacheHelper::refreshAll();
+
+        $this->resetForm();
+        $this->dispatch('pedagang-saved');
+        $this->dispatch('notify', type: 'success', message: 'Data pedagang berhasil disimpan!');
+    }
+
+    public function delete(): void
+    {
+        $user = auth()->user();
+        abort_if(!$user->can('delete'), 403, 'Tidak memiliki izin hapus.');
+
+        if ($this->deleteId) {
+            $pedagang = Pedagang::findOrFail($this->deleteId);
+            if (!$user->hasRole('admin') && $user->pasar_id) {
+                abort_if($user->pasar_id !== $pedagang->pasar_id, 403, 'Hanya dapat menghapus pedagang di pasar Anda.');
+            }
+            $pedagang->delete();
+            PedagangCacheHelper::refreshAll();
+
+            $this->dispatch('pedagang-deleted');
+            $this->dispatch('notify', type: 'success', message: 'Data pedagang berhasil dihapus!');
+        }
+
+        $this->reset(['deleteId', 'deleteName']);
+    }
+
+    public function importCsv(): void
+    {
+        $user = auth()->user();
+        abort_if(!$user->can('create') && !$user->can('import'), 403, 'Tidak memiliki izin import.');
+
+        $this->validate([
+            'csvFile' => 'required|file|mimes:csv,txt|max:10240', // Max 10MB
+        ]);
+
+        // Simpan file sementara di storage lokal
+        $path = $this->csvFile->store('temp_imports', 'local');
+
+        $userPasarId = $user->pasar_id;
+        $isAdmin = $user->hasRole('admin');
+
+        // Dispatch background Queue Job agar aman untuk data ribuan
+        ImportPedagangJob::dispatch($path, $userPasarId, $isAdmin);
+
+        $this->reset('csvFile');
+        $this->dispatch('csv-imported');
+        $this->dispatch('notify', type: 'success', message: 'File CSV berhasil diunggah dan sedang diproses di background Queue!');
+    }
+
+    public function downloadTemplateCsv()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="template_import_pedagang.csv"',
+        ];
+
+        $callback = function () {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Nama',
+                'NIK',
+                'Alamat Tinggal',
+                'Jenis Sarana',
+                'Ukuran',
+                'Tarif per meter (m2)',
+                'Total tarif bulanan (Rp)',
+                'Jenis Usaha',
+                'Titik Kordinat',
+                'Alamat Usaha',
+                'Nama atau ID Pasar'
+            ]);
+
+            fputcsv($handle, [
+                'Budi Santoso',
+                '7271012345678901',
+                'Jl. Mawar No. 12 Palu',
+                'Kios',
+                '6.00',
+                '25000',
+                '150000',
+                'Sembako',
+                '-0.891234, 119.876543',
+                'Pasar Masomba Blok A No 5',
+                'Pasar Masomba'
+            ]);
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportExcel(): void
+    {
+        $user = auth()->user();
+        abort_if(!$user->can('read') && !$user->can('export'), 403, 'Tidak memiliki izin export.');
+
+        $exportPasarId = (!$user->hasRole('admin') && $user->pasar_id)
+            ? $user->pasar_id
+            : $this->selectedPasarId;
+
+        $fileName = 'pedagang_export_' . date('Ymd_His') . '.xlsx';
+
+        ExportPedagangJob::dispatch($exportPasarId, $fileName);
+
+        $this->lastExportFile = $fileName;
+        $this->dispatch('export-queued');
+        $this->dispatch('notify', type: 'success', message: 'Export Excel sedang diproses di background Queue! File dapat diunduh.');
+    }
+
+    public function downloadExport(string $file)
+    {
+        $path = storage_path('app/public/exports/' . basename($file));
+        if (file_exists($path)) {
+            return response()->download($path);
+        }
+
+        $this->dispatch('notify', type: 'error', message: 'File export belum selesai diproses atau tidak ditemukan.');
+    }
+
+    public function resetForm(): void
+    {
+        $this->reset([
+            'pedagangId',
+            'nama',
+            'nik',
+            'alamat',
+            'jenis_sarana',
+            'ukuran',
+            'tarif_per_meter',
+            'tarif_bulanan',
+            'jenis_usaha',
+            'latitude',
+            'longitude',
+            'alamat_usaha',
+        ]);
+
+        $user = auth()->user();
+        if ($user && !$user->hasRole('admin') && $user->pasar_id) {
+            $this->pasar_id = $user->pasar_id;
+        } else {
+            $this->pasar_id = null;
+        }
+
+        $this->resetValidation();
+    }
+
     public function render()
     {
-        return view('livewire.dashboard.data-pedagang');
+        $user = auth()->user();
+        $targetPasarId = (!$user->hasRole('admin') && $user->pasar_id)
+            ? $user->pasar_id
+            : $this->selectedPasarId;
+
+        $allPedagangs = PedagangCacheHelper::getAll($targetPasarId);
+
+        if ($this->search) {
+            $s = strtolower($this->search);
+            $pedagangs = $allPedagangs->filter(function ($item) use ($s) {
+                return str_contains(strtolower($item->nama), $s)
+                    || str_contains(strtolower($item->nik ?? ''), $s)
+                    || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
+                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s);
+            });
+        } else {
+            $pedagangs = $allPedagangs;
+        }
+
+        return view('livewire.dashboard.data-pedagang', [
+            'pedagangs' => $pedagangs,
+            'pasars' => PasarsCacheHelper::getAllPasar(),
+        ])->layout('layouts.dashboard.main');
     }
 }

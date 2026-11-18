@@ -32,7 +32,7 @@
     ====================================================================== --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-gray-800 dark:text-white">Sarana Prasarana Pasar</h1>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Sarana Prasarana Pasar</h1>
             @can('read')
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 Total:
