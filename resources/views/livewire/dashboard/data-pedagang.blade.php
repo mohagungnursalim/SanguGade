@@ -48,6 +48,7 @@
             <button
                 type="button"
                 wire:click="exportExcel"
+                wire:target="exportExcel"
                 wire:loading.attr="disabled"
                 class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition disabled:opacity-50"
             >
@@ -59,7 +60,9 @@
                 <button
                     type="button"
                     wire:click="downloadExport('{{ $lastExportFile }}')"
-                    class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg shadow-sm transition"
+                    wire:target="downloadExport"
+                    wire:loading.attr="disabled"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg shadow-sm transition disabled:opacity-50"
                 >
                     <i class="fas fa-download"></i> Unduh Hasil Export
                 </button>
@@ -460,6 +463,7 @@
                         </button>
                         <button
                             type="submit"
+                            wire:target="save"
                             wire:loading.attr="disabled"
                             class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
                         >
@@ -546,6 +550,7 @@
                             </button>
                             <button
                                 type="submit"
+                                wire:target="importCsv,csvFile"
                                 wire:loading.attr="disabled"
                                 class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
                             >
@@ -599,6 +604,7 @@
                     <button
                         type="button"
                         wire:click="delete"
+                        wire:target="delete"
                         wire:loading.attr="disabled"
                         class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition disabled:opacity-50"
                     >
