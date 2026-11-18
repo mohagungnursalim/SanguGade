@@ -20,7 +20,8 @@ return new class extends Migration
         $table->string('email')->nullable()->unique();
         $table->string('no_telepon', 20)->nullable();
         $table->enum('jenis_kelamin', ['L', 'P'])->nullable();
-        $table->text('alamat')->nullable();
+        $table->text('alamat')->nullable(); // Alamat Tinggal
+        $table->text('alamat_usaha')->nullable(); // Alamat Usaha
 
         // Data Usaha
         $table->string('jenis_usaha'); // contoh: sembako, daging, sayur
