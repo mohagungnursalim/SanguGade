@@ -1670,7 +1670,19 @@ function ssrdManager() {
 
             let tgl = '';
             if (item.tanggal_penyetoran) {
-                tgl = item.tanggal_penyetoran.substring(0, 10);
+                if (item.tanggal_penyetoran.includes('T')) {
+                    const d = new Date(item.tanggal_penyetoran);
+                    if (!isNaN(d.getTime())) {
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        tgl = `${year}-${month}-${day}`;
+                    } else {
+                        tgl = item.tanggal_penyetoran.substring(0, 10);
+                    }
+                } else {
+                    tgl = item.tanggal_penyetoran.substring(0, 10);
+                }
             }
             this.$wire.set('edit_tanggal_penyetoran', tgl);
             this.$wire.set('edit_nama_penyetor', item.nama_penyetor || '');
