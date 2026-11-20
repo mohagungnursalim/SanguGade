@@ -128,7 +128,7 @@
                         <th class="px-4 py-3 text-right">Total Tarif / Bln</th>
                         <th class="px-3 py-3">Jenis Usaha</th>
                         <th class="px-4 py-3">Titik Kordinat</th>
-                        <th class="px-4 py-3">Alamat Usaha</th>
+                        <th class="px-4 py-3">Lokasi Usaha</th>
                         <th class="px-3 py-3">Pasar</th>
                         <th class="px-3 py-3 text-center w-24">Aksi</th>
                     </tr>
@@ -352,6 +352,9 @@
 
                     {{-- Ukuran, Tarif/m2, Total Tarif Bulanan --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-750 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <span class="col-span-full text-[11px] font-semibold text-red-500 dark:text-red-300 mb-1">*Perhitungan Tarif Retribusi sesuai ketentuan Pasar.</span>
+
+                        </span>
                         <div>
                             <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">Ukuran (m²)</label>
                             <input
@@ -379,7 +382,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">Total Tarif Bulanan (Rp)</label>
+                            <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">Total Tarif Ditagih (Rp)</label>
                             <input
                                 type="number"
                                 step="100"
@@ -416,9 +419,9 @@
                         </div>
                     </div>
 
-                    {{-- Alamat Usaha --}}
+                    {{-- Lokasi Usaha --}}
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Alamat Usaha (Lokasi Kios/Lapak)</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Lokasi Usaha (Kios/Lapak/Los)</label>
                         <textarea
                             wire:model="alamat_usaha"
                             rows="2"
