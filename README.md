@@ -32,6 +32,5 @@
 
 > ### 💡 Catatan Kaki Developer
 > ```
-> [ INFO ] : "Kios boleh berantakan, tapi database pedagang tetap normal third form (3NF)."
-> [ ALERT ]: "Jangan sekali-kali import CSV 10.000 data langsung di controller tanpa Queue kalau tidak mau server berubah jadi kompor gas!"
+> [ INFO ] : "Powered By Laravel"
 > ```
