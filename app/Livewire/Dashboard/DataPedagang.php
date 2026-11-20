@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Exports\PedagangTemplateExport;
 use App\Helpers\PasarsCacheHelper;
 use App\Helpers\PedagangCacheHelper;
 use App\Jobs\ExportPedagangJob;
@@ -10,6 +11,7 @@ use App\Models\Pedagang;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataPedagang extends Component
 {
@@ -38,7 +40,7 @@ class DataPedagang extends Component
     public string $deleteName = '';
 
     // Import file
-    public $csvFile = null;
+    public $excelFile = null;
 
     // Export tracking
     public ?string $lastExportFile = null;
@@ -153,17 +155,17 @@ class DataPedagang extends Component
         $this->reset(['deleteId', 'deleteName']);
     }
 
-    public function importCsv(): void
+    public function importExcel(): void
     {
         $user = auth()->user();
         abort_if(!$user->can('create') && !$user->can('import'), 403, 'Tidak memiliki izin import.');
 
         $this->validate([
-            'csvFile' => 'required|file|mimes:csv,txt|max:10240', // Max 10MB
+            'excelFile' => 'required|file|mimes:xlsx,xls|max:10240',
         ]);
 
         // Simpan file sementara di storage lokal
-        $path = $this->csvFile->store('temp_imports', 'local');
+        $path = $this->excelFile->store('temp_imports', 'local');
 
         $userPasarId = $user->pasar_id;
         $isAdmin = $user->hasRole('admin');
@@ -171,52 +173,14 @@ class DataPedagang extends Component
         // Dispatch background Queue Job agar aman untuk data ribuan
         ImportPedagangJob::dispatch($path, $userPasarId, $isAdmin);
 
-        $this->reset('csvFile');
-        $this->dispatch('csv-imported');
-        $this->dispatch('notify', type: 'success', message: 'File CSV berhasil diunggah dan sedang diproses di background Queue!');
+        $this->reset('excelFile');
+        $this->dispatch('excel-imported');
+        $this->dispatch('notify', type: 'success', message: 'File Excel berhasil diunggah dan sedang diproses di background Queue!');
     }
 
-    public function downloadTemplateCsv()
+    public function downloadTemplateExcel()
     {
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="template_import_pedagang.csv"',
-        ];
-
-        $callback = function () {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, [
-                'Nama',
-                'NIK',
-                'Alamat Tinggal',
-                'Jenis Sarana',
-                'Ukuran',
-                'Tarif per meter (m2)',
-                'Total tarif bulanan (Rp)',
-                'Jenis Usaha',
-                'Titik Kordinat',
-                'Alamat Usaha',
-                'Nama atau ID Pasar'
-            ]);
-
-            fputcsv($handle, [
-                'Budi Santoso',
-                '7271012345678901',
-                'Jl. Mawar No. 12 Palu',
-                'Kios',
-                '6.00',
-                '25000',
-                '150000',
-                'Sembako',
-                '-0.891234, 119.876543',
-                'Pasar Masomba Blok A No 5',
-                'Pasar Masomba'
-            ]);
-
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new PedagangTemplateExport(), 'template_import_pedagang.xlsx');
     }
 
     public function exportExcel(): void
