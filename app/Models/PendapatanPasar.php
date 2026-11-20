@@ -35,7 +35,7 @@ class PendapatanPasar extends Model
         'tahun_ssrd'         => 'integer',
         'tahun_retribusi'    => 'integer',
         'jumlah_retribusi'   => 'float',
-        'tanggal_penyetoran' => 'date',
+        'tanggal_penyetoran' => 'date:Y-m-d',
     ];
 
     public function pasar(): BelongsTo
