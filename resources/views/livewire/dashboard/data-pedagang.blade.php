@@ -453,7 +453,7 @@
                     </div>
 
                     {{-- Footer Buttons --}}
-                    <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button
                             type="button"
                             @click="closeModal()"
@@ -465,8 +465,7 @@
                             type="submit"
                             wire:target="save"
                             wire:loading.attr="disabled"
-                            class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
-                        >
+                            class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50">
                             <span wire:loading.remove wire:target="save">Simpan Data</span>
                             <span wire:loading wire:target="save"><i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...</span>
                         </button>
@@ -618,6 +617,13 @@
 </div>
 
 @push('scripts')
+<style>
+    [x-data="pedagangManager()"] input::placeholder,
+    [x-data="pedagangManager()"] textarea::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+    }
+</style>
 <script>
 function pedagangManager() {
     return {
