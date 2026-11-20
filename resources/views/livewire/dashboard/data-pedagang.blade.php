@@ -4,7 +4,7 @@
     x-init="init()"
     @pedagang-saved.window="closeModal()"
     @pedagang-deleted.window="closeDeleteModal()"
-    @csv-imported.window="closeImportModal()"
+    @excel-imported.window="closeImportModal()"
     @notify.window="showNotify($event.detail)"
 >
     {{-- Floating Toast Notification --}}
@@ -32,14 +32,14 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            {{-- Tombol Import CSV --}}
+            {{-- Tombol Import Excel --}}
             @can('create')
             <button
                 type="button"
                 @click="openImportModal()"
                 class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg shadow-sm transition"
             >
-                <i class="fas fa-file-import text-blue-500"></i> Import CSV
+                <i class="fas fa-file-import text-blue-500"></i> Import Excel
             </button>
             @endcan
 
@@ -479,7 +479,7 @@
     </div>
 
     {{-- =========================================================================
-         MODAL IMPORT CSV
+         MODAL IMPORT EXCEL
     ========================================================================== --}}
     <div
         x-show="importModalOpen"
@@ -500,7 +500,7 @@
                 @click.stop
             >
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Import Data Pedagang (.CSV)</h3>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Import Data Pedagang (.XLSX / .XLS)</h3>
                     <button
                         type="button"
                         @click="closeImportModal()"
@@ -513,13 +513,17 @@
                 <div class="p-6 space-y-4">
                     <div class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-800 dark:text-blue-300">
                         <div class="flex items-center justify-between font-semibold mb-1">
-                            <span><i class="fas fa-info-circle mr-1"></i> Format Kolom CSV:</span>
+                            <span><i class="fas fa-info-circle mr-1"></i> Format Kolom Excel:</span>
                             <button
                                 type="button"
-                                wire:click="downloadTemplateCsv"
-                                class="text-blue-600 hover:underline font-bold"
+                                wire:click="downloadTemplateExcel"
+                                wire:target="downloadTemplateExcel"
+                                wire:loading.attr="disabled"
+                                class="text-blue-600 hover:underline font-bold disabled:opacity-50"
                             >
-                                <i class="fas fa-download mr-1"></i> Unduh Format CSV
+                                <i class="fas fa-file-excel mr-1" wire:loading.remove wire:target="downloadTemplateExcel"></i>
+                                <i class="fas fa-spinner fa-spin mr-1" wire:loading wire:target="downloadTemplateExcel"></i>
+                                Unduh Template Excel (.xlsx)
                             </button>
                         </div>
                         <p class="text-[11px] text-gray-600 dark:text-gray-400">
@@ -530,16 +534,16 @@
                         </p>
                     </div>
 
-                    <form wire:submit="importCsv" class="space-y-4">
+                    <form wire:submit="importExcel" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Pilih File CSV</label>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Pilih File Excel (.xlsx)</label>
                             <input
                                 type="file"
-                                wire:model="csvFile"
-                                accept=".csv,text/csv"
-                                class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700"
+                                wire:model="excelFile"
+                                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-gray-700 dark:file:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700"
                             >
-                            @error('csvFile') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                            @error('excelFile') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -552,12 +556,12 @@
                             </button>
                             <button
                                 type="submit"
-                                wire:target="importCsv,csvFile"
+                                wire:target="importExcel,excelFile"
                                 wire:loading.attr="disabled"
                                 class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
                             >
-                                <span wire:loading.remove wire:target="importCsv">Mulai Import</span>
-                                <span wire:loading wire:target="importCsv"><i class="fas fa-spinner fa-spin mr-1"></i> Memproses CSV...</span>
+                                <span wire:loading.remove wire:target="importExcel">Mulai Import</span>
+                                <span wire:loading wire:target="importExcel"><i class="fas fa-spinner fa-spin mr-1"></i> Mengimpor Excel...</span>
                             </button>
                         </div>
                     </form>
