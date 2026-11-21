@@ -45,17 +45,15 @@ class UsersCacheHelper
      */
     public static function getAllUsersWithRelations()
     {
-        return Cache::remember(self::vKey('all_non_admin_with_relations'), self::$ttl, function () {
-            return User::whereDoesntHave('roles', function ($query) {
-                $query->where('name', 'admin');
-            })
-            ->with([
-                'roles:id,name',
-                'pasar:id,nama_pasar,kecamatan,kelurahan'
-            ])
-            ->latest('id')
-            ->get();
-        });
+        return User::whereDoesntHave('roles', function ($query) {
+            $query->where('name', 'admin');
+        })
+        ->with([
+            'roles:id,name',
+            'pasar:id,nama_pasar,kecamatan,kelurahan'
+        ])
+        ->latest('id')
+        ->get();
     }
 
     /**

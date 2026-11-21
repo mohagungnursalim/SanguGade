@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -33,6 +34,24 @@ class User extends Authenticatable
         return $this->belongsTo(Pasar::class, 'pasar_id');
     }
 
+    public function isOnline(): bool
+    {
+        return Cache::has('user-online:' . $this->id);
+    }
+
+    public function lastSeenLabel(): string
+    {
+        if ($this->isOnline()) {
+            return 'Sedang online';
+        }
+
+        if (!$this->last_seen_at) {
+            return 'Belum pernah terlihat';
+        }
+
+        return 'Terakhir dilihat ' . $this->last_seen_at->diffForHumans();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -52,6 +71,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

@@ -1,5 +1,6 @@
 <div
     class="p-6 text-gray-900 dark:text-gray-100"
+    wire:poll.30s.keep-alive
     x-data="userManager()"
     x-init="init()"
     @user-saved.window="closeModal()"
@@ -49,6 +50,7 @@
                     <th class="px-4 py-3">Email</th>
                     <th class="px-4 py-3">Peran (Role)</th>
                     <th class="px-4 py-3">Lokasi Pasar (Mounting)</th>
+                    <th class="px-4 py-3">Status</th>
                     <th class="px-4 py-3 text-center w-28">Aksi</th>
                 </tr>
             </thead>
@@ -92,6 +94,24 @@
                             </span>
                         @endif
                     </td>
+                    <td class="px-4 py-3">
+                        @if ($user->isOnline())
+                            <div class="flex flex-col gap-1">
+                                <span class="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Online
+                                </span>
+                            </div>
+                        @else
+                            <div class="flex flex-col gap-0.5 text-gray-500 dark:text-gray-400">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                    Offline
+                                </span>
+                                <span class="text-[10px]">{{ $user->lastSeenLabel() }}</span>
+                            </div>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-1">
                             {{-- Tombol Edit via Alpine: @click="openEditModal(@js($user))" --}}
@@ -118,7 +138,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                    <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                         <div class="flex flex-col items-center gap-2">
                             <i class="fa-solid fa-users-slash text-3xl text-gray-300 dark:text-gray-600"></i>
                             <p class="font-medium text-xs">Belum ada akun pengguna non-admin (OPD, Operator, Bapokting).</p>
