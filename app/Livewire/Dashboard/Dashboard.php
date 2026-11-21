@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Helpers\PasarsCacheHelper;
+use App\Helpers\PedagangCacheHelper;
 use App\Helpers\PendapatanCacheHelper;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -38,43 +39,52 @@ class Dashboard extends Component
 
     public function updatedTimeframe(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function updatedPasarId(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function updatedSelectedTahun(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function updatedSelectedBulan(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function updatedStartDate(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function updatedEndDate(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function setTimeframe(string $mode): void
     {
         $this->timeframe = $mode;
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
     }
 
     public function pollData(): void
     {
-        $this->dispatch('chart-data-updated', chartData: $this->getChartData());
+        $this->dispatchChartsUpdated();
+    }
+
+    protected function dispatchChartsUpdated(): void
+    {
+        $activePasarId = !empty($this->pasarId) ? (int)$this->pasarId : null;
+        $allCharts = $this->getAllChartsData($activePasarId);
+
+        $this->dispatch('chart-data-updated', chartData: $allCharts['pendapatan']);
+        $this->dispatch('extra-charts-updated', charts: $allCharts);
     }
 
     public function getChartData(): array
@@ -87,6 +97,51 @@ class Dashboard extends Component
             startDate: $this->startDate,
             endDate: $this->endDate
         );
+    }
+
+    public function getAllChartsData(?int $activePasarId = null): array
+    {
+        $allPasars = PasarsCacheHelper::getAllPasar();
+        $filteredSummary = PendapatanCacheHelper::getFilteredSummary(
+            timeframe: $this->timeframe,
+            pasarId: $this->pasarId ?: null,
+            tahun: $this->selectedTahun,
+            bulan: $this->selectedBulan,
+            startDate: $this->startDate,
+            endDate: $this->endDate
+        );
+        $pasarStats = $filteredSummary['pasar_stats'] ?? collect();
+
+        // 1. Ranking PAD Pasar (Bar Chart)
+        $rankingList = $allPasars->when($activePasarId, function ($collection) use ($activePasarId) {
+            return $collection->where('id', $activePasarId);
+        })->map(function ($p) use ($pasarStats) {
+            $stat = $pasarStats->get($p->id);
+            return [
+                'nama' => $p->nama_pasar,
+                'total' => $stat ? (float)$stat->total_nominal : 0.0,
+            ];
+        })->sortByDesc('total')->values();
+
+        $rankingLabels = $rankingList->pluck('nama')->toArray();
+        $rankingData = $rankingList->pluck('total')->toArray();
+
+        // 2. Jenis Usaha Pedagang (Pie / Donut Chart)
+        $jenisUsahaData = PedagangCacheHelper::getJenisUsahaStats($activePasarId);
+
+        // 3. Proporsi Sarana Berdagang (Donut Chart)
+        $jenisSaranaData = PedagangCacheHelper::getJenisSaranaStats($activePasarId);
+
+        // 4. Kondisi Fisik Sarana & Bangunan Pasar (Pie Chart)
+        $kondisiSaranaData = PasarsCacheHelper::getKondisiSaranaStats($activePasarId);
+
+        return [
+            'pendapatan'     => $this->getChartData(),
+            'rankingPasar'   => ['labels' => $rankingLabels, 'data' => $rankingData],
+            'jenisUsaha'     => $jenisUsahaData,
+            'jenisSarana'    => $jenisSaranaData,
+            'kondisiSarana'  => $kondisiSaranaData,
+        ];
     }
 
     public function render()
@@ -134,6 +189,7 @@ class Dashboard extends Component
         })->sortByDesc('pendapatan_pasars_sum_jumlah_retribusi')->values();
 
         $chartData = $this->getChartData();
+        $allChartsData = $this->getAllChartsData($activePasarId);
 
         // Ambil timestamp update terakhir dari database (pendapatan atau pasar)
         $latestPendapatanUpdate = PendapatanCacheHelper::getLastUpdated();
@@ -156,6 +212,7 @@ class Dashboard extends Component
             'ringkasanPerPasar' => $ringkasanPerPasar,
             'tahunList'         => $tahunList,
             'chartData'         => $chartData,
+            'allChartsData'     => $allChartsData,
             'lastUpdated'       => $lastUpdated,
         ])->layout('layouts.dashboard.main');
     }

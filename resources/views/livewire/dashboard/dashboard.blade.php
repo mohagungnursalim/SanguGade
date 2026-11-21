@@ -261,6 +261,103 @@
     </div>
 
     {{-- =====================================================================
+         GRID 4 GRAFIK TAMBAHAN: RANKING BAR CHART & 3 PIE/DONUT CHARTS
+    ====================================================================== --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"
+         x-data="extraChartsManager()"
+         x-init="initCharts(@js($allChartsData))"
+         @extra-charts-updated.window="updateCharts($event.detail.charts)"
+    >
+        {{-- 1. Bar Chart: Ranking Realisasi Retribusi Antar Pasar --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                            Ranking Realisasi Retribusi per Pasar
+                        </h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Perbandingan penerimaan retribusi antar pasar pada filter aktif
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative w-full h-72" wire:ignore>
+                <canvas id="rankingPasarBarChart"></canvas>
+            </div>
+        </div>
+
+        {{-- 2. Pie / Donut Chart: Komposisi Jenis Usaha Pedagang --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                            Komposisi Jenis Usaha Pedagang
+                        </h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Sebaran komoditas/usaha pedagang yang terdata
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative w-full h-72" wire:ignore>
+                <canvas id="jenisUsahaPieChart"></canvas>
+            </div>
+        </div>
+
+        {{-- 3. Donut Chart: Proporsi Jenis Sarana Berdagang --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                        <i class="fa-solid fa-store"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                            Proporsi Jenis Sarana Berdagang
+                        </h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Distribusi tempat usaha pedagang (Kios, Los, Lapak, dll)
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative w-full h-72" wire:ignore>
+                <canvas id="jenisSaranaDonutChart"></canvas>
+            </div>
+        </div>
+
+        {{-- 4. Pie Chart: Kondisi Fisik Sarana & Bangunan Pasar --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
+                        <i class="fa-solid fa-building-circle-check"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                            Kondisi Fisik Sarana Bangunan
+                        </h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Kelayakan unit sarana prasarana pasar
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative w-full h-72" wire:ignore>
+                <canvas id="kondisiSaranaPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {{-- =====================================================================
          TABEL REKAPITULASI PENDAPATAN PER PASAR (GLOBAL CACHED)
     ====================================================================== --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
@@ -542,6 +639,366 @@ document.addEventListener('livewire:navigated', () => {
             }
         }
     }
+
+    const barCtx = document.getElementById('rankingPasarBarChart');
+    if (barCtx && typeof Chart !== 'undefined' && !Chart.getChart(barCtx)) {
+        if (typeof window.extraChartsManager === 'function') {
+            const elExtra = barCtx.closest('[x-data]');
+            if (elExtra && elExtra._x_dataStack && elExtra._x_dataStack[0]) {
+                elExtra._x_dataStack[0].initCharts();
+            }
+        }
+    }
 });
+
+/**
+ * Alpine component untuk mengontrol 4 grafik tambahan (Bar Chart & Pie/Donut Charts)
+ * Mengadopsi persis pola chartManager yang sudah stabil
+ */
+function extraChartsManager() {
+    return {
+        chartsData: null,
+        rankingChartInstance: null,
+        jenisUsahaChartInstance: null,
+        jenisSaranaChartInstance: null,
+        kondisiSaranaChartInstance: null,
+
+        initCharts(initialData) {
+            if (initialData) {
+                this.chartsData = initialData;
+            }
+
+            if (typeof Chart === 'undefined') {
+                setTimeout(() => this.initCharts(initialData), 100);
+                return;
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const borderColor = isDark ? '#1f2937' : '#ffffff';
+
+            // 1. Ranking Bar Chart
+            const barCtx = document.getElementById('rankingPasarBarChart');
+            if (barCtx) {
+                const existing = Chart.getChart(barCtx);
+                if (existing) existing.destroy();
+
+                const barLabels = (this.chartsData?.rankingPasar?.labels?.length) ? this.chartsData.rankingPasar.labels : ['-'];
+                const barData = (this.chartsData?.rankingPasar?.data?.length) ? this.chartsData.rankingPasar.data : [0];
+
+                this.rankingChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: barLabels,
+                        datasets: [{
+                            label: 'Realisasi Retribusi (Rp)',
+                            data: barData,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 300,
+                        },
+                        hover: {
+                            mode: 'nearest',
+                            intersect: false,
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'y',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'nearest',
+                                axis: 'y',
+                                intersect: false,
+                                backgroundColor: '#111827',
+                                titleColor: '#ffffff',
+                                bodyColor: '#10b981',
+                                padding: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return 'Retribusi: Rp ' + Number(val).toLocaleString('id-ID');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' M';
+                                        if (value >= 1000000) return (value / 1000000).toFixed(1) + ' Jt';
+                                        if (value >= 1000) return (value / 1000).toFixed(0) + ' Rb';
+                                        return value;
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: textColor, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Jenis Usaha Pie Chart
+            const pieCtx = document.getElementById('jenisUsahaPieChart');
+            if (pieCtx) {
+                const existing = Chart.getChart(pieCtx);
+                if (existing) existing.destroy();
+
+                const pieLabels = (this.chartsData?.jenisUsaha?.labels?.length) ? this.chartsData.jenisUsaha.labels : ['-'];
+                const pieData = (this.chartsData?.jenisUsaha?.data?.length) ? this.chartsData.jenisUsaha.data : [0];
+
+                this.jenisUsahaChartInstance = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: pieLabels,
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'],
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 12 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return ` ${context.label}: ` + Number(val).toLocaleString('id-ID') + ' Pedagang';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Jenis Sarana Donut Chart
+            const donutCtx = document.getElementById('jenisSaranaDonutChart');
+            if (donutCtx) {
+                const existing = Chart.getChart(donutCtx);
+                if (existing) existing.destroy();
+
+                const donutLabels = (this.chartsData?.jenisSarana?.labels?.length) ? this.chartsData.jenisSarana.labels : ['-'];
+                const donutData = (this.chartsData?.jenisSarana?.data?.length) ? this.chartsData.jenisSarana.data : [0];
+
+                this.jenisSaranaChartInstance = new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: donutLabels,
+                        datasets: [{
+                            data: donutData,
+                            backgroundColor: ['#3b82f6', '#06b6d4', '#6366f1', '#f59e0b', '#ec4899', '#64748b'],
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 12 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return ` ${context.label}: ` + Number(val).toLocaleString('id-ID') + ' Sarana';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 4. Kondisi Sarana Pie Chart
+            const kondisiCtx = document.getElementById('kondisiSaranaPieChart');
+            if (kondisiCtx) {
+                const existing = Chart.getChart(kondisiCtx);
+                if (existing) existing.destroy();
+
+                const kLabels = (this.chartsData?.kondisiSarana?.labels?.length) ? this.chartsData.kondisiSarana.labels : ['-'];
+                const kData = (this.chartsData?.kondisiSarana?.data?.length) ? this.chartsData.kondisiSarana.data : [0];
+
+                this.kondisiSaranaChartInstance = new Chart(kondisiCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: kLabels,
+                        datasets: [{
+                            data: kData,
+                            backgroundColor: ['#10b981', '#3b82f6', '#ef4444'],
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 12 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return ` ${context.label}: ` + Number(val).toLocaleString('id-ID') + ' Unit';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        },
+
+        updateCharts(newCharts) {
+            if (!newCharts) return;
+            this.chartsData = newCharts;
+
+            // Re-render Ranking Bar agar layout scale Y & tooltip hit-area selalu presisi 100%
+            const barCtx = document.getElementById('rankingPasarBarChart');
+            if (barCtx && newCharts.rankingPasar) {
+                const existing = Chart.getChart(barCtx);
+                if (existing) existing.destroy();
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+                const textColor = isDark ? '#9ca3af' : '#4b5563';
+
+                const barLabels = (newCharts.rankingPasar.labels?.length) ? newCharts.rankingPasar.labels : ['-'];
+                const barData = (newCharts.rankingPasar.data?.length) ? newCharts.rankingPasar.data : [0];
+
+                this.rankingChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: barLabels,
+                        datasets: [{
+                            label: 'Realisasi Retribusi (Rp)',
+                            data: barData,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 250,
+                        },
+                        hover: {
+                            mode: 'nearest',
+                            intersect: false,
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'y',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'nearest',
+                                axis: 'y',
+                                intersect: false,
+                                backgroundColor: '#111827',
+                                titleColor: '#ffffff',
+                                bodyColor: '#10b981',
+                                padding: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return 'Retribusi: Rp ' + Number(val).toLocaleString('id-ID');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' M';
+                                        if (value >= 1000000) return (value / 1000000).toFixed(1) + ' Jt';
+                                        if (value >= 1000) return (value / 1000).toFixed(0) + ' Rb';
+                                        return value;
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: textColor, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Update Jenis Usaha Pie
+            if (this.jenisUsahaChartInstance && newCharts.jenisUsaha) {
+                const labels = (newCharts.jenisUsaha.labels && newCharts.jenisUsaha.labels.length) ? newCharts.jenisUsaha.labels : ['-'];
+                const data = (newCharts.jenisUsaha.data && newCharts.jenisUsaha.data.length) ? newCharts.jenisUsaha.data : [0];
+                this.jenisUsahaChartInstance.data.labels = labels;
+                this.jenisUsahaChartInstance.data.datasets[0].data = data;
+                this.jenisUsahaChartInstance.update();
+            }
+
+            // Update Jenis Sarana Donut
+            if (this.jenisSaranaChartInstance && newCharts.jenisSarana) {
+                const labels = (newCharts.jenisSarana.labels && newCharts.jenisSarana.labels.length) ? newCharts.jenisSarana.labels : ['-'];
+                const data = (newCharts.jenisSarana.data && newCharts.jenisSarana.data.length) ? newCharts.jenisSarana.data : [0];
+                this.jenisSaranaChartInstance.data.labels = labels;
+                this.jenisSaranaChartInstance.data.datasets[0].data = data;
+                this.jenisSaranaChartInstance.update();
+            }
+
+            // Update Kondisi Sarana Pie
+            if (this.kondisiSaranaChartInstance && newCharts.kondisiSarana) {
+                const labels = (newCharts.kondisiSarana.labels && newCharts.kondisiSarana.labels.length) ? newCharts.kondisiSarana.labels : ['-'];
+                const data = (newCharts.kondisiSarana.data && newCharts.kondisiSarana.data.length) ? newCharts.kondisiSarana.data : [0];
+                this.kondisiSaranaChartInstance.data.labels = labels;
+                this.kondisiSaranaChartInstance.data.datasets[0].data = data;
+                this.kondisiSaranaChartInstance.update();
+            }
+        }
+    };
+}
 </script>
 @endpush
