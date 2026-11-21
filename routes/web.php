@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 // ========== Frontend ==========
 Route::get('/', function () {
@@ -26,6 +27,13 @@ Route::get('/', function () {
 
 // ======== Logout Route ==========
 Route::post('/logout', function () {
+    $user = Auth::user();
+
+    if ($user) {
+        $user->forceFill(['last_seen_at' => now()])->saveQuietly();
+        Cache::forget('user-online:' . $user->id);
+    }
+
     Auth::logout();
 
     request()->session()->invalidate();
