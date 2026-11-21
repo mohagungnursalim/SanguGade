@@ -121,6 +121,67 @@ class PasarsCacheHelper
     }
 
     /**
+     * Ambil data kondisi fisik sarana & bangunan pasar (cached)
+     *
+     * @return array{labels: array<string>, data: array<int>}
+     */
+    public static function getKondisiSaranaStats(?int $pasarId = null): array
+    {
+        $suffix = 'kondisi_sarana_' . ($pasarId ?: 'all');
+
+        return Cache::remember(self::vKey($suffix), self::$ttl, function () use ($pasarId) {
+            $totals = self::getGlobalTotals($pasarId);
+
+            $baik = (int) ($totals->total_baik ?? 0);
+            $rusak = (int) ($totals->total_rusak ?? 0);
+            $terpakai = (int) ($totals->total_terpakai ?? 0);
+
+            if ($baik === 0 && $rusak === 0 && $terpakai === 0) {
+                return [
+                    'labels' => ['Belum Ada Data'],
+                    'data' => [0],
+                ];
+            }
+
+            return [
+                'labels' => ['Kondisi Baik', 'Kondisi Terpakai', 'Kondisi Rusak'],
+                'data' => [$baik, $terpakai, $rusak],
+            ];
+        });
+    }
+
+    /**
+     * Ambil data perbandingan sarana pasar (Kios, Los, Lapak, Ruko) dari tabel pasar
+     *
+     * @return array{labels: array<string>, data: array<int>}
+     */
+    public static function getKapasitasSaranaStats(?int $pasarId = null): array
+    {
+        $suffix = 'kapasitas_sarana_' . ($pasarId ?: 'all');
+
+        return Cache::remember(self::vKey($suffix), self::$ttl, function () use ($pasarId) {
+            $totals = self::getGlobalTotals($pasarId);
+
+            $kios = (int) ($totals->total_kios ?? 0);
+            $los = (int) ($totals->total_los ?? 0);
+            $lapak = (int) ($totals->total_lapak ?? 0);
+            $ruko = (int) ($totals->total_ruko ?? 0);
+
+            if ($kios === 0 && $los === 0 && $lapak === 0 && $ruko === 0) {
+                return [
+                    'labels' => ['Belum Ada Data'],
+                    'data' => [0],
+                ];
+            }
+
+            return [
+                'labels' => ['Kios', 'Los', 'Lapak', 'Ruko'],
+                'data' => [$kios, $los, $lapak, $ruko],
+            ];
+        });
+    }
+
+    /**
      * Invalidate semua cache pasar lalu pre-warm entry global.
      * Invalidasi bersifat O(1) — cukup increment version key.
      */
