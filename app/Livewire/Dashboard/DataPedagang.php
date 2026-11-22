@@ -19,6 +19,7 @@ class DataPedagang extends Component
 
     public ?int $selectedPasarId = null;
     public string $search = '';
+    public int $perPage = 10;
 
     // Form attributes
     public ?int $pedagangId = null;
@@ -79,6 +80,21 @@ class DataPedagang extends Component
             $this->selectedPasarId = $user->pasar_id;
             $this->pasar_id = $user->pasar_id;
         }
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->perPage = 10;
+    }
+
+    public function updatedSelectedPasarId(): void
+    {
+        $this->perPage = 10;
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 10;
     }
 
     public function calculateTarifBulanan(): void
@@ -249,18 +265,26 @@ class DataPedagang extends Component
 
         if ($this->search) {
             $s = strtolower($this->search);
-            $pedagangs = $allPedagangs->filter(function ($item) use ($s) {
+            $filtered = $allPedagangs->filter(function ($item) use ($s) {
                 return str_contains(strtolower($item->nama), $s)
                     || str_contains(strtolower($item->nik ?? ''), $s)
                     || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
-                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s);
+                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s)
+                    || str_contains(strtolower($item->alamat_usaha ?? ''), $s)
+                    || str_contains(strtolower($item->alamat ?? ''), $s);
             });
         } else {
-            $pedagangs = $allPedagangs;
+            $filtered = $allPedagangs;
         }
+
+        $totalFiltered = $filtered->count();
+        $pedagangs = $filtered->take($this->perPage);
+        $hasMorePages = $totalFiltered > $this->perPage;
 
         return view('livewire.dashboard.data-pedagang', [
             'pedagangs' => $pedagangs,
+            'totalFiltered' => $totalFiltered,
+            'hasMorePages' => $hasMorePages,
             'pasars' => PasarsCacheHelper::getAllPasar(),
         ])->layout('layouts.dashboard.main');
     }

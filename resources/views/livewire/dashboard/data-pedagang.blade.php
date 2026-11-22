@@ -135,7 +135,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse ($pedagangs as $index => $item)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                    <tr class="hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition">
                         <td class="px-3 py-3 text-center font-medium text-gray-500">{{ $loop->iteration }}</td>
                         <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                             {{ $item->nama }}
@@ -229,6 +229,39 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Load More Pagination --}}
+        @if ($hasMorePages)
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                <div class="flex flex-col items-center gap-2">
+                    <button
+                        type="button"
+                        wire:click="loadMore"
+                        wire:loading.attr="disabled"
+                        wire:target="loadMore"
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                    >
+                        <span wire:loading.remove wire:target="loadMore">
+                            <i class="fa-solid fa-chevron-down mr-1"></i>
+                            Tampilkan Lebih Banyak
+                        </span>
+                        <span wire:loading wire:target="loadMore">
+                            <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                            Memuat Data...
+                        </span>
+                    </button>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                        Menampilkan <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $pedagangs->count() }}</span> dari <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $totalFiltered }}</span> pedagang
+                    </span>
+                </div>
+            </div>
+        @elseif($pedagangs->isNotEmpty())
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 text-center">
+                <span class="text-[11px] text-gray-400 dark:text-gray-500">
+                    Menampilkan seluruh {{ $totalFiltered }} data pedagang
+                </span>
+            </div>
+        @endif
     </div>
     @else
     <div class="p-8 text-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
