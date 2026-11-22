@@ -125,21 +125,18 @@ class DataPedagangTest extends TestCase
         ]);
     }
 
-    public function test_can_import_csv(): void
+    public function test_can_import_excel(): void
     {
         Queue::fake();
         Storage::fake('local');
 
-        $csvContent = "Nama,NIK,Alamat Tinggal,Jenis Sarana,Ukuran,Tarif per meter,Total tarif bulanan,Jenis Usaha,Titik Kordinat,Alamat Usaha,Pasar\n"
-            . "Siti Aminah,7271023456789012,Jl. Melati,Los,4,20000,80000,Sayuran,\"-0.891, 119.876\",Blok B No 2,{$this->pasar->id}\n";
-
-        $file = UploadedFile::fake()->createWithContent('pedagang.csv', $csvContent);
+        $file = UploadedFile::fake()->create('pedagang.xlsx', 100);
 
         Livewire::actingAs($this->adminUser)
             ->test(DataPedagang::class)
-            ->set('csvFile', $file)
-            ->call('importCsv')
-            ->assertDispatched('csv-imported');
+            ->set('excelFile', $file)
+            ->call('importExcel')
+            ->assertDispatched('excel-imported');
 
         Queue::assertPushed(ImportPedagangJob::class);
     }
