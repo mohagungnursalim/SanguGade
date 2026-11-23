@@ -50,7 +50,7 @@ class DataPedagang extends Component
     {
         return [
             'nama' => 'required|string|max:255',
-            'nik' => 'nullable|string|max:20|unique:pedagangs,nik,' . $this->pedagangId,
+            'nik' => 'nullable|string|max:20',
             'alamat' => 'nullable|string|max:1000',
             'jenis_sarana' => 'required|string|max:100',
             'ukuran' => 'nullable|numeric|min:0',

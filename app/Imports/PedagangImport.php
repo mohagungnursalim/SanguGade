@@ -36,15 +36,9 @@ class PedagangImport implements
             return null;
         }
 
-        // Parse koordinat "lat, lng" dari satu kolom
-        $koordinat = trim($row['titik_kordinat'] ?? $row['koordinat'] ?? $row['titik_koordinat'] ?? '');
-        $lat = null;
-        $lng = null;
-        if ($koordinat && str_contains($koordinat, ',')) {
-            [$latRaw, $lngRaw] = explode(',', $koordinat, 2);
-            $lat = (float)trim($latRaw) ?: null;
-            $lng = (float)trim($lngRaw) ?: null;
-        }
+        // Parse koordinat "lat, lng" dari satu kolom (misal: "-0.891, 119.876" atau ada teks sebelum "-0")
+        $koordinatRaw = trim((string)($row['titik_kordinat'] ?? $row['koordinat'] ?? $row['titik_koordinat'] ?? ''));
+        [$lat, $lng] = $this->parseCoordinates($koordinatRaw);
 
         // Hitung auto jika total tarif bulanan tidak diisi
         $ukuran = (float)str_replace(',', '.', $row['ukuran'] ?? 0);
@@ -99,6 +93,55 @@ class PedagangImport implements
         });
 
         return $pasar?->id ?? ($this->userPasarId ?? PasarsCacheHelper::getAllPasar()->first()?->id);
+    }
+
+    /**
+     * Ekstrak & bersihkan koordinat Latitude & Longitude.
+     * Mampu menangani:
+     * - Teks/kata di depan "-0" (misal: "Depan Toko -0.895872, 119.895955" atau "Loc: -0.895872")
+     * - Longitude tanpa koma jika terpisah spasi
+     * - Melindungi dari error numeric out of range (-90 <= lat <= 90 dan -180 <= lng <= 180)
+     *
+     * @return array{0: ?float, 1: ?float}
+     */
+    private function parseCoordinates(string $input): array
+    {
+        if (!$input) {
+            return [null, null];
+        }
+
+        // Cari posisi awal "-0" atau "-?[0-9]"
+        // Jika ada teks di depan "-0", potong dari mulai "-0"
+        $posMinusZero = strpos($input, '-0');
+        if ($posMinusZero !== false) {
+            $input = substr($input, $posMinusZero);
+        }
+
+        // Ekstrak angka desimal (bisa bertanda minus) menggunakan regex
+        // Menangkap format seperti -0.895872 dan 119.895955
+        preg_match_all('/[-+]?[0-9]+(?:[\.,][0-9]+)?/', $input, $matches);
+
+        $numbers = $matches[0] ?? [];
+
+        if (count($numbers) >= 2) {
+            $latVal = (float) str_replace(',', '.', $numbers[0]);
+            $lngVal = (float) str_replace(',', '.', $numbers[1]);
+        } elseif (count($numbers) === 1) {
+            $val = (float) str_replace(',', '.', $numbers[0]);
+            $latVal = $val;
+            $lngVal = null;
+        } else {
+            return [null, null];
+        }
+
+        // Validasi batasan geografis MySQL decimal(10, 7)
+        // Latitude: -90 s/d 90
+        $lat = ($latVal !== null && $latVal >= -90.0 && $latVal <= 90.0) ? round($latVal, 7) : null;
+
+        // Longitude: -180 s/d 180
+        $lng = ($lngVal !== null && $lngVal >= -180.0 && $lngVal <= 180.0) ? round($lngVal, 7) : null;
+
+        return [$lat, $lng];
     }
 }
 
