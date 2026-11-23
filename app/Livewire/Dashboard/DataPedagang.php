@@ -99,6 +99,17 @@ class DataPedagang extends Component
         $this->resetPageSelection();
     }
 
+    public function loadMore(): void
+    {
+        if ($this->perPage === 'all') {
+            return;
+        }
+
+        $current = (int) $this->perPage;
+        $this->perPage = (string) ($current + 10);
+        $this->resetPageSelection();
+    }
+
     public function updatedSelectAll($value): void
     {
         if ($value) {
