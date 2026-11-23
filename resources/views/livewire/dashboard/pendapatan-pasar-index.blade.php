@@ -552,7 +552,7 @@
             <div x-show="mode === 'create'">
                 <form
                     wire:submit.prevent="store"
-                    x-data="{ uploadProgress: 0, isUploading: false }"
+                    x-data="{ uploadProgress: 0, isUploading: false, selectedImagePreview: null }"
                     x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
                     x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
                     x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
@@ -821,10 +821,14 @@
                                                 return;
                                             }
 
+                                            if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+                                            selectedImagePreview = URL.createObjectURL(file);
                                             isUploading = true;
                                             uploadProgress = 0;
                                             $wire.upload('bukti_ssrd', file, () => {
                                                 isUploading = false;
+                                                URL.revokeObjectURL(selectedImagePreview);
+                                                selectedImagePreview = null;
                                                 input.value = '';
                                             }, () => {
                                                 isUploading = false;
@@ -853,8 +857,11 @@
                                         :style="'width:' + uploadProgress + '%'"
                                     ></div>
                                 </div>
+                                <div x-show="selectedImagePreview" x-cloak class="mt-3 flex items-center gap-3">
+                                    <img :src="selectedImagePreview" alt="Preview foto terpilih" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                </div>
                                 @if ($bukti_ssrd)
-                                    <div class="mt-3 flex items-center gap-3">
+                                    <div x-show="!selectedImagePreview" class="mt-3 flex items-center gap-3">
                                         <img src="{{ $bukti_ssrd->temporaryUrl() }}" alt="Preview bukti SSRD" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
                                         <button type="button" wire:click="removeBuktiSsrd" @click="$refs.buktiSsrdInput.value = ''" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
                                             <i class="fas fa-trash"></i> Hapus foto
@@ -932,7 +939,7 @@
             <div x-show="mode === 'edit'">
                 <form
                     wire:submit.prevent="update"
-                    x-data="{ uploadProgress: 0, isUploading: false }"
+                    x-data="{ uploadProgress: 0, isUploading: false, selectedImagePreview: null }"
                     x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
                     x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
                     x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
@@ -1160,14 +1167,14 @@
                             <div class="sm:col-span-3">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Foto Bukti SSRD</label>
                                 @if ($edit_bukti_ssrd)
-                                    <div class="mb-3 flex items-center gap-3">
+                                    <div x-show="!selectedImagePreview" class="mb-3 flex items-center gap-3">
                                         <img src="{{ $edit_bukti_ssrd->temporaryUrl() }}" alt="Preview bukti SSRD" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
                                         <button type="button" wire:click="removeEditBuktiSsrd" @click="$refs.editBuktiSsrdInput.value = ''" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
                                             <i class="fas fa-trash"></i> Hapus foto baru
                                         </button>
                                     </div>
                                 @elseif ($edit_bukti_ssrd_path)
-                                    <div class="mb-3 flex items-center gap-3">
+                                    <div x-show="!selectedImagePreview" class="mb-3 flex items-center gap-3">
                                         <img src="{{ asset('storage/' . $edit_bukti_ssrd_path) }}" alt="Foto bukti SSRD saat ini" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
                                         <p class="text-xs text-gray-500 dark:text-gray-400">Foto saat ini. Unggah file baru untuk menggantinya.</p>
                                     </div>
@@ -1195,10 +1202,14 @@
                                                 return;
                                             }
 
+                                            if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+                                            selectedImagePreview = URL.createObjectURL(file);
                                             isUploading = true;
                                             uploadProgress = 0;
                                             $wire.upload('edit_bukti_ssrd', file, () => {
                                                 isUploading = false;
+                                                URL.revokeObjectURL(selectedImagePreview);
+                                                selectedImagePreview = null;
                                                 input.value = '';
                                             }, () => {
                                                 isUploading = false;
@@ -1226,6 +1237,9 @@
                                         :class="uploadProgress < 100 ? 'bg-amber-500' : 'bg-green-500'"
                                         :style="'width:' + uploadProgress + '%'"
                                     ></div>
+                                </div>
+                                <div x-show="selectedImagePreview" x-cloak class="mt-3 flex items-center gap-3">
+                                    <img :src="selectedImagePreview" alt="Preview foto terpilih" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
                                 </div>
                                 @error('edit_bukti_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
