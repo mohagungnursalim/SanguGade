@@ -553,6 +553,7 @@
                 <form
                     wire:submit.prevent="store"
                     x-data="{ uploadProgress: 0, isUploading: false, selectedImagePreview: null }"
+                    x-effect="if (!modalOpen && selectedImagePreview) { URL.revokeObjectURL(selectedImagePreview); selectedImagePreview = null }"
                     x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
                     x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
                     x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
@@ -827,8 +828,6 @@
                                             uploadProgress = 0;
                                             $wire.upload('bukti_ssrd', file, () => {
                                                 isUploading = false;
-                                                URL.revokeObjectURL(selectedImagePreview);
-                                                selectedImagePreview = null;
                                                 input.value = '';
                                             }, () => {
                                                 isUploading = false;
@@ -859,6 +858,15 @@
                                 </div>
                                 <div x-show="selectedImagePreview" x-cloak class="mt-3 flex items-center gap-3">
                                     <img :src="selectedImagePreview" alt="Preview foto terpilih" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                    <button
+                                        type="button"
+                                        wire:click="removeBuktiSsrd"
+                                        @click="URL.revokeObjectURL(selectedImagePreview); selectedImagePreview = null; $refs.buktiSsrdInput.value = ''"
+                                        :disabled="isUploading"
+                                        class="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        <i class="fas fa-trash"></i> Hapus foto
+                                    </button>
                                 </div>
                                 @if ($bukti_ssrd)
                                     <div x-show="!selectedImagePreview" class="mt-3 flex items-center gap-3">
@@ -940,6 +948,7 @@
                 <form
                     wire:submit.prevent="update"
                     x-data="{ uploadProgress: 0, isUploading: false, selectedImagePreview: null }"
+                    x-effect="if (!modalOpen && selectedImagePreview) { URL.revokeObjectURL(selectedImagePreview); selectedImagePreview = null }"
                     x-on:livewire-upload-start="isUploading = true; uploadProgress = 0"
                     x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
                     x-on:livewire-upload-finish="isUploading = false; uploadProgress = 0"
@@ -1208,8 +1217,6 @@
                                             uploadProgress = 0;
                                             $wire.upload('edit_bukti_ssrd', file, () => {
                                                 isUploading = false;
-                                                URL.revokeObjectURL(selectedImagePreview);
-                                                selectedImagePreview = null;
                                                 input.value = '';
                                             }, () => {
                                                 isUploading = false;
@@ -1240,6 +1247,15 @@
                                 </div>
                                 <div x-show="selectedImagePreview" x-cloak class="mt-3 flex items-center gap-3">
                                     <img :src="selectedImagePreview" alt="Preview foto terpilih" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                    <button
+                                        type="button"
+                                        wire:click="removeEditBuktiSsrd"
+                                        @click="URL.revokeObjectURL(selectedImagePreview); selectedImagePreview = null; $refs.editBuktiSsrdInput.value = ''"
+                                        :disabled="isUploading"
+                                        class="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        <i class="fas fa-trash"></i> Hapus foto baru
+                                    </button>
                                 </div>
                                 @error('edit_bukti_ssrd') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                             </div>
