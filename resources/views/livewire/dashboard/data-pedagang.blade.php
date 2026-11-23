@@ -4,6 +4,7 @@
     x-init="init()"
     @pedagang-saved.window="closeModal()"
     @pedagang-deleted.window="closeDeleteModal()"
+    @bulk-deleted.window="closeBulkDeleteModal()"
     @excel-imported.window="closeImportModal()"
     @notify.window="showNotify($event.detail)"
 >
@@ -83,8 +84,9 @@
     </div>
 
     {{-- Filter Bar --}}
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div class="flex-1 w-full sm:w-auto relative">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        {{-- Input Pencarian --}}
+        <div class="flex-1 w-full md:w-auto relative">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                 <i class="fas fa-search"></i>
             </span>
@@ -96,20 +98,69 @@
             >
         </div>
 
-        @if(auth()->user()->hasRole('admin'))
-        <div class="w-full sm:w-64">
-            <select
-                wire:model.live="selectedPasarId"
-                class="w-full py-2 px-3 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white"
-            >
-                <option value="">Semua Lokasi Pasar</option>
-                @foreach($pasars as $pasar)
-                    <option value="{{ $pasar->id }}">{{ $pasar->nama_pasar }}</option>
-                @endforeach
-            </select>
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full md:w-auto">
+            {{-- Filter Per Page (10 / 20 / 50 / 100 / Semua) --}}
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <label class="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Tampilkan:</label>
+                <select
+                    wire:model.live="perPage"
+                    class="py-2 px-3 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white font-medium"
+                >
+                    <option value="10">10 Data</option>
+                    <option value="20">20 Data</option>
+                    <option value="50">50 Data</option>
+                    <option value="100">100 Data</option>
+                    <option value="all">Semua Data</option>
+                </select>
+            </div>
+
+            {{-- Filter Lokasi Pasar (Hanya Admin) --}}
+            @if(auth()->user()->hasRole('admin'))
+            <div class="w-full sm:w-56">
+                <select
+                    wire:model.live="selectedPasarId"
+                    class="w-full py-2 px-3 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white"
+                >
+                    <option value="">Semua Lokasi Pasar</option>
+                    @foreach($pasars as $pasar)
+                        <option value="{{ $pasar->id }}">{{ $pasar->nama_pasar }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
         </div>
-        @endif
     </div>
+
+    {{-- Floating Action Bar Saat Memilih Checklist (Bulk Delete) --}}
+    @if(count($selectedPedagangs) > 0)
+    <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+        <div class="flex items-center gap-2 text-xs text-blue-800 dark:text-blue-300 font-medium">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[11px]">
+                {{ count($selectedPedagangs) }}
+            </span>
+            <span>pedagang terpilih untuk tindakan massal.</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button
+                type="button"
+                wire:click="$set('selectedPedagangs', [])"
+                class="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg transition"
+            >
+                Batalkan Pilihan
+            </button>
+            @can('delete')
+            <button
+                type="button"
+                @click="openBulkDeleteModal()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+            >
+                <i class="fas fa-trash-alt text-xs"></i> Hapus Terpilih ({{ count($selectedPedagangs) }})
+            </button>
+            @endcan
+        </div>
+    </div>
+    @endif
 
     {{-- Tabel Data Pedagang --}}
     @can('read')
@@ -118,6 +169,14 @@
             <table class="w-full text-xs text-left">
                 <thead class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase font-semibold">
                     <tr>
+                        <th class="px-3 py-3 w-8 text-center">
+                            <input
+                                type="checkbox"
+                                wire:model.live="selectAll"
+                                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-xs focus:ring-blue-500 cursor-pointer"
+                                title="Pilih Semua di Halaman Ini"
+                            >
+                        </th>
                         <th class="px-3 py-3 w-10 text-center">No</th>
                         <th class="px-4 py-3">Nama Pedagang</th>
                         <th class="px-4 py-3">NIK</th>
@@ -135,7 +194,15 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse ($pedagangs as $index => $item)
-                    <tr class="hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition">
+                    <tr class="hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition {{ in_array((string)$item->id, $selectedPedagangs, true) ? 'bg-blue-50/70 dark:bg-blue-950/30' : '' }}">
+                        <td class="px-3 py-3 text-center">
+                            <input
+                                type="checkbox"
+                                wire:model.live="selectedPedagangs"
+                                value="{{ (string)$item->id }}"
+                                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-xs focus:ring-blue-500 cursor-pointer"
+                            >
+                        </td>
                         <td class="px-3 py-3 text-center font-medium text-gray-500">{{ $loop->iteration }}</td>
                         <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                             {{ $item->nama }}
@@ -220,7 +287,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="13" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                        <td colspan="14" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                             <i class="fas fa-store-slash text-3xl mb-2 block"></i>
                             Belum ada data pedagang yang ditemukan.
                         </td>
@@ -654,6 +721,58 @@
             </div>
         </div>
     </div>
+
+    {{-- =========================================================================
+         MODAL KONFIRMASI BULK DELETE (Alpine Modal)
+    ========================================================================== --}}
+    <div
+        x-show="bulkDeleteModalOpen"
+        x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+    >
+        <div
+            x-show="bulkDeleteModalOpen"
+            class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity"
+            @click="closeBulkDeleteModal()"
+        ></div>
+
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div
+                class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-center transform transition-all"
+                @click.stop
+            >
+                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-4 text-xl">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1">Hapus Massal Pedagang?</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">
+                    Apakah Anda yakin ingin menghapus <span class="font-bold text-red-600 dark:text-red-400">{{ count($selectedPedagangs) }} pedagang</span> yang dipilih? Tindakan ini tidak dapat dibatalkan.
+                </p>
+
+                <div class="flex items-center justify-center gap-3">
+                    <button
+                        type="button"
+                        @click="closeBulkDeleteModal()"
+                        class="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 transition"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="bulkDelete"
+                        wire:target="bulkDelete"
+                        wire:loading.attr="disabled"
+                        class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition disabled:opacity-50"
+                    >
+                        <span wire:loading.remove wire:target="bulkDelete">Ya, Hapus Semua</span>
+                        <span wire:loading wire:target="bulkDelete"><i class="fas fa-spinner fa-spin mr-1"></i> Menghapus...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
@@ -669,6 +788,7 @@ function pedagangManager() {
     return {
         modalOpen: false,
         deleteModalOpen: false,
+        bulkDeleteModalOpen: false,
         importModalOpen: false,
         mode: 'create', // 'create' | 'edit'
         targetPedagang: null,
@@ -730,6 +850,16 @@ function pedagangManager() {
         closeDeleteModal() {
             this.deleteModalOpen = false;
             this.targetPedagang = null;
+            document.body.classList.remove('overflow-hidden');
+        },
+
+        openBulkDeleteModal() {
+            this.bulkDeleteModalOpen = true;
+            document.body.classList.add('overflow-hidden');
+        },
+
+        closeBulkDeleteModal() {
+            this.bulkDeleteModalOpen = false;
             document.body.classList.remove('overflow-hidden');
         },
 

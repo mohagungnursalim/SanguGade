@@ -19,7 +19,9 @@ class DataPedagang extends Component
 
     public ?int $selectedPasarId = null;
     public string $search = '';
-    public int $perPage = 10;
+    public string $perPage = '10'; // '10', '20', '50', '100', 'all'
+    public array $selectedPedagangs = [];
+    public bool $selectAll = false;
 
     // Form attributes
     public ?int $pedagangId = null;
@@ -84,17 +86,97 @@ class DataPedagang extends Component
 
     public function updatedSearch(): void
     {
-        $this->perPage = 10;
+        $this->resetPageSelection();
     }
 
     public function updatedSelectedPasarId(): void
     {
-        $this->perPage = 10;
+        $this->resetPageSelection();
     }
 
-    public function loadMore(): void
+    public function updatedPerPage(): void
     {
-        $this->perPage += 10;
+        $this->resetPageSelection();
+    }
+
+    public function updatedSelectAll($value): void
+    {
+        if ($value) {
+            $this->selectedPedagangs = array_map('strval', $this->getCurrentPageIds());
+        } else {
+            $this->selectedPedagangs = [];
+        }
+    }
+
+    public function updatedSelectedPedagangs(): void
+    {
+        $pageIds = $this->getCurrentPageIds();
+        $selectedCount = count(array_intersect($pageIds, array_map('intval', $this->selectedPedagangs)));
+        $this->selectAll = count($pageIds) > 0 && $selectedCount === count($pageIds);
+    }
+
+    private function resetPageSelection(): void
+    {
+        $this->selectedPedagangs = [];
+        $this->selectAll = false;
+    }
+
+    private function getCurrentPageIds(): array
+    {
+        $user = auth()->user();
+        $targetPasarId = (!$user->hasRole('admin') && $user->pasar_id)
+            ? $user->pasar_id
+            : $this->selectedPasarId;
+
+        $allPedagangs = PedagangCacheHelper::getAll($targetPasarId);
+
+        if ($this->search) {
+            $s = strtolower($this->search);
+            $filtered = $allPedagangs->filter(function ($item) use ($s) {
+                return str_contains(strtolower($item->nama), $s)
+                    || str_contains(strtolower($item->nik ?? ''), $s)
+                    || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
+                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s)
+                    || str_contains(strtolower($item->alamat_usaha ?? ''), $s)
+                    || str_contains(strtolower($item->alamat ?? ''), $s);
+            });
+        } else {
+            $filtered = $allPedagangs;
+        }
+
+        if ($this->perPage === 'all') {
+            return $filtered->pluck('id')->all();
+        }
+
+        $limit = (int) $this->perPage;
+        return $filtered->take($limit > 0 ? $limit : 10)->pluck('id')->all();
+    }
+
+    public function bulkDelete(): void
+    {
+        $user = auth()->user();
+        abort_if(!$user->can('delete'), 403, 'Tidak memiliki izin hapus.');
+
+        if (empty($this->selectedPedagangs)) {
+            $this->dispatch('notify', type: 'error', message: 'Pilih pedagang yang ingin dihapus terlebih dahulu.');
+            return;
+        }
+
+        $query = Pedagang::whereIn('id', $this->selectedPedagangs);
+
+        // Operator hanya boleh menghapus pedagang di pasarnya sendiri
+        if (!$user->hasRole('admin') && $user->pasar_id) {
+            $query->where('pasar_id', $user->pasar_id);
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        PedagangCacheHelper::refreshAll();
+
+        $this->resetPageSelection();
+        $this->dispatch('bulk-deleted');
+        $this->dispatch('notify', type: 'success', message: "Berhasil menghapus {$count} data pedagang!");
     }
 
     public function calculateTarifBulanan(): void
@@ -278,8 +360,16 @@ class DataPedagang extends Component
         }
 
         $totalFiltered = $filtered->count();
-        $pedagangs = $filtered->take($this->perPage);
-        $hasMorePages = $totalFiltered > $this->perPage;
+
+        if ($this->perPage === 'all') {
+            $pedagangs = $filtered;
+            $hasMorePages = false;
+        } else {
+            $limit = (int) $this->perPage;
+            $limit = $limit > 0 ? $limit : 10;
+            $pedagangs = $filtered->take($limit);
+            $hasMorePages = $totalFiltered > $limit;
+        }
 
         return view('livewire.dashboard.data-pedagang', [
             'pedagangs' => $pedagangs,
