@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pedagangs', function (Blueprint $table) {
-            // Drop unique index pada kolom nik
-            $table->dropUnique('pedagangs_nik_unique');
-        });
+        if (Schema::hasTable('pedagangs') && Schema::hasIndex('pedagangs', 'pedagangs_nik_unique')) {
+            Schema::table('pedagangs', function (Blueprint $table) {
+                // Drop unique index pada kolom nik
+                $table->dropUnique('pedagangs_nik_unique');
+            });
+        }
     }
 
     /**
@@ -22,9 +24,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pedagangs', function (Blueprint $table) {
-            $table->unique('nik');
-        });
+        if (Schema::hasTable('pedagangs') && !Schema::hasIndex('pedagangs', 'pedagangs_nik_unique')) {
+            Schema::table('pedagangs', function (Blueprint $table) {
+                $table->unique('nik');
+            });
+        }
     }
 };
 

@@ -16,17 +16,22 @@ return new class extends Migration
 
         // Identitas Pedagang
         $table->string('nama');
-        $table->string('nik', 20)->nullable()->unique();
-        $table->string('email')->nullable()->unique();
+        $table->string('nama_usaha')->nullable();
+        $table->string('nik', 20)->nullable();
+        $table->string('email')->nullable();
         $table->string('no_telepon', 20)->nullable();
         $table->enum('jenis_kelamin', ['L', 'P'])->nullable();
         $table->text('alamat')->nullable(); // Alamat Tinggal
+        $table->string('nama_tempat')->nullable(); // Nama Tempat (contoh: Kios A, Los 5, Lapak 3, dll)
         $table->text('alamat_usaha')->nullable(); // Alamat Usaha
 
         // Data Usaha
         $table->string('jenis_usaha'); // contoh: sembako, daging, sayur
-        $table->string('jenis_sarana'); // kios, los, tenda, dll
+        $table->string('jenis_sarana'); // kios, los, Lapak, dll
         $table->decimal('ukuran', 8, 2)->nullable(); // contoh: 2.50 (meter)
+
+        // Keterangan tambahan
+        $table->text('keterangan')->nullable();
         
         // Tarif
         $table->decimal('tarif_per_meter', 12, 2)->default(0);

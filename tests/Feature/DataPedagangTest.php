@@ -53,6 +53,7 @@ class DataPedagangTest extends TestCase
             ->set('nama', 'Budi Santoso')
             ->set('nik', '7271012345678901')
             ->set('alamat', 'Jl. Mawar No 1')
+            ->set('nama_tempat', 'Kios A No 5')
             ->set('jenis_sarana', 'Kios')
             ->set('ukuran', 6)
             ->set('tarif_per_meter', 25000)
@@ -61,6 +62,7 @@ class DataPedagangTest extends TestCase
             ->set('latitude', -0.8912)
             ->set('longitude', 119.8765)
             ->set('alamat_usaha', 'Blok A No 1')
+            ->set('keterangan', 'Aktif berjualan')
             ->set('pasar_id', $this->pasar->id)
             ->call('save')
             ->assertDispatched('pedagang-saved')
@@ -69,8 +71,10 @@ class DataPedagangTest extends TestCase
         $this->assertDatabaseHas('pedagangs', [
             'nama' => 'Budi Santoso',
             'nik' => '7271012345678901',
+            'nama_tempat' => 'Kios A No 5',
             'jenis_sarana' => 'Kios',
             'jenis_usaha' => 'Sembako',
+            'keterangan' => 'Aktif berjualan',
             'pasar_id' => $this->pasar->id,
         ]);
     }
@@ -80,8 +84,10 @@ class DataPedagangTest extends TestCase
         $pedagang = Pedagang::create([
             'nama' => 'Pedagang Lama',
             'nik' => '7271000000000001',
+            'nama_tempat' => 'Kios Lama',
             'jenis_sarana' => 'Kios',
             'jenis_usaha' => 'Sembako',
+            'keterangan' => 'Catatan lama',
             'pasar_id' => $this->pasar->id,
         ]);
 
@@ -90,8 +96,10 @@ class DataPedagangTest extends TestCase
             ->set('pedagangId', $pedagang->id)
             ->set('nama', 'Pedagang Diedit')
             ->set('nik', '7271000000000001')
+            ->set('nama_tempat', 'Los Baru No 2')
             ->set('jenis_sarana', 'Los')
             ->set('jenis_usaha', 'Sayur')
+            ->set('keterangan', 'Catatan diperbarui')
             ->set('pasar_id', $this->pasar->id)
             ->call('save')
             ->assertDispatched('pedagang-saved');
@@ -99,8 +107,10 @@ class DataPedagangTest extends TestCase
         $this->assertDatabaseHas('pedagangs', [
             'id' => $pedagang->id,
             'nama' => 'Pedagang Diedit',
+            'nama_tempat' => 'Los Baru No 2',
             'jenis_sarana' => 'Los',
             'jenis_usaha' => 'Sayur',
+            'keterangan' => 'Catatan diperbarui',
         ]);
     }
 
@@ -145,8 +155,8 @@ class DataPedagangTest extends TestCase
     {
         Storage::fake('local');
 
-        $csvContent = "Nama,NIK,Alamat Tinggal,Jenis Sarana,Ukuran,Tarif per meter,Total tarif bulanan,Jenis Usaha,Titik Kordinat,Alamat Usaha,Pasar\n"
-            . "Siti Aminah,7271023456789012,Jl. Melati,Los,4,20000,80000,Sayuran,\"-0.891, 119.876\",Blok B No 2,{$this->pasar->id}\n";
+        $csvContent = "Nama,NIK,Alamat Tinggal,Nama Tempat,Jenis Sarana,Ukuran,Tarif per meter,Total tarif bulanan,Jenis Usaha,Titik Kordinat,Alamat Usaha,Keterangan,Pasar\n"
+            . "Siti Aminah,7271023456789012,Jl. Melati,Los B No 2,Los,4,20000,80000,Sayuran,\"-0.891, 119.876\",Blok B No 2,Catatan impor,{$this->pasar->id}\n";
 
         Storage::disk('local')->put('temp_imports/test.csv', $csvContent);
 
@@ -156,8 +166,10 @@ class DataPedagangTest extends TestCase
         $this->assertDatabaseHas('pedagangs', [
             'nama' => 'Siti Aminah',
             'nik' => '7271023456789012',
+            'nama_tempat' => 'Los B No 2',
             'jenis_sarana' => 'Los',
             'jenis_usaha' => 'Sayuran',
+            'keterangan' => 'Catatan impor',
             'pasar_id' => $this->pasar->id,
         ]);
     }
@@ -172,5 +184,48 @@ class DataPedagangTest extends TestCase
             ->assertDispatched('export-queued');
 
         Queue::assertPushed(ExportPedagangJob::class);
+    }
+
+    public function test_export_job_creates_xlsx_with_nama_tempat_and_keterangan(): void
+    {
+        Pedagang::create([
+            'nama' => 'Pedagang Export',
+            'nik' => '7271099999999999',
+            'alamat' => 'Jl. Export',
+            'nama_tempat' => 'Kios C No 9',
+            'jenis_sarana' => 'Kios',
+            'ukuran' => 5,
+            'tarif_per_meter' => 25000,
+            'tarif_bulanan' => 125000,
+            'jenis_usaha' => 'Pakaian',
+            'alamat_usaha' => 'Blok C No 9',
+            'keterangan' => 'Lunas bulan ini',
+            'pasar_id' => $this->pasar->id,
+        ]);
+
+        $fileName = 'test_pedagang_export_' . uniqid() . '.xlsx';
+        $fullPath = storage_path('app/public/exports/' . $fileName);
+
+        try {
+            $job = new ExportPedagangJob($this->pasar->id, $fileName);
+            $job->handle();
+
+            $this->assertFileExists($fullPath);
+
+            $zip = new \ZipArchive();
+            $this->assertTrue($zip->open($fullPath) === true);
+            $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+            $zip->close();
+
+            $this->assertIsString($sheetXml);
+            $this->assertStringContainsString('Nama Tempat', $sheetXml);
+            $this->assertStringContainsString('Keterangan', $sheetXml);
+            $this->assertStringContainsString('Kios C No 9', $sheetXml);
+            $this->assertStringContainsString('Lunas bulan ini', $sheetXml);
+        } finally {
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
     }
 }
