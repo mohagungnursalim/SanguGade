@@ -73,7 +73,7 @@ class PendapatanPasarTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)->get(route('dashboard.pendapatan-pasar'));
         $response->assertOk();
-        $response->assertSee('Pendapatan Pasar (SSRD)');
+        $response->assertSee('Pendapatan Pasar');
     }
 
     public function test_can_create_ssrd_record(): void
@@ -300,7 +300,7 @@ class PendapatanPasarTest extends TestCase
         ]);
     }
 
-    public function test_non_operator_only_sees_records_they_uploaded(): void
+    public function test_opd_sees_all_records_with_read_only_access(): void
     {
         $user = User::factory()->create();
         $role = Role::firstOrCreate(['name' => 'opd', 'guard_name' => 'web']);
@@ -330,7 +330,10 @@ class PendapatanPasarTest extends TestCase
         Livewire::actingAs($user)
             ->test(PendapatanPasarIndex::class)
             ->assertSee('MY-SSRD')
-            ->assertDontSee('ADMIN-SSRD')
-            ->assertViewHas('totalNominalAll', 1500.0);
+            ->assertSee('ADMIN-SSRD')
+            ->assertDontSee('Tambah SSRD')
+            ->assertDontSee('Edit Data SSRD')
+            ->assertDontSee('Hapus Data')
+            ->assertViewHas('totalNominalAll', 4000.0);
     }
 }

@@ -40,5 +40,11 @@ class PermissionSeeder extends Seeder
         if ($adminRole) {
             $adminRole->syncPermissions(Permission::whereIn('name', $permissions)->get());
         }
+
+        // OPD hanya memiliki akses membaca seluruh data SSRD
+        $opdRole = Role::where('name', 'opd')->first();
+        if ($opdRole) {
+            $opdRole->syncPermissions(Permission::whereIn('name', ['read'])->get());
+        }
     }
 }

@@ -598,7 +598,7 @@ class PendapatanPasarIndex extends Component
             } else {
                 $query->where('pasar_id', $user->pasar_id);
             }
-        } elseif (!$this->isAdmin()) {
+        } elseif (!$this->isAdmin() && !$this->isOpd()) {
             $query->where('user_id', $user->id);
         }
 
@@ -622,6 +622,11 @@ class PendapatanPasarIndex extends Component
     private function isAdmin(): bool
     {
         return auth()->user()->hasRole('admin');
+    }
+
+    private function isOpd(): bool
+    {
+        return auth()->user()->hasRole('opd') && !$this->isAdmin();
     }
 
     // ─── Render ───────────────────────────────────────────────────────────
@@ -653,7 +658,7 @@ class PendapatanPasarIndex extends Component
             ])->layout('layouts.dashboard.main');
         }
 
-        $ownerId = ($this->isAdmin() || $this->isOperator()) ? null : (int) $user->id;
+        $ownerId = ($this->isAdmin() || $this->isOperator() || $this->isOpd()) ? null : (int) $user->id;
         $pasarScope = $this->cachePasarScope();
 
         // Query List Pendapatan SSRD
