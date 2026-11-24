@@ -33,6 +33,7 @@ class ExportPedagangJob implements ShouldQueue
             'Nama',
             'NIK',
             'Alamat Tinggal',
+            'Nama Tempat',
             'Jenis Sarana',
             'Ukuran',
             'Tarif per meter (m2)',
@@ -40,6 +41,7 @@ class ExportPedagangJob implements ShouldQueue
             'Jenis Usaha',
             'Titik Kordinat',
             'Alamat Usaha',
+            'Keterangan',
             'Pasar'
         ];
 
@@ -56,6 +58,7 @@ class ExportPedagangJob implements ShouldQueue
                     $item->nama,
                     $item->nik ? "'{$item->nik}" : '-',
                     $item->alamat ?? '-',
+                    $item->nama_tempat ?? '-',
                     $item->jenis_sarana ?? '-',
                     $item->ukuran ?? 0,
                     $item->tarif_per_meter ?? 0,
@@ -63,6 +66,7 @@ class ExportPedagangJob implements ShouldQueue
                     $item->jenis_usaha ?? '-',
                     $kordinat,
                     $item->alamat_usaha ?? '-',
+                    $item->keterangan ?? '-',
                     $item->pasar?->nama_pasar ?? '-'
                 ];
             }

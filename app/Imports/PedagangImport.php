@@ -63,6 +63,7 @@ class PedagangImport implements
             'nik'             => $nik,
             'nama'            => $nama,
             'alamat'          => trim($row['alamat_tinggal'] ?? $row['alamat'] ?? '') ?: null,
+            'nama_tempat'     => trim($row['nama_tempat'] ?? $row['tempat'] ?? '') ?: null,
             'jenis_sarana'    => trim($row['jenis_sarana'] ?? 'Kios'),
             'ukuran'          => $ukuran,
             'tarif_per_meter' => $tarifMeter,
@@ -71,6 +72,7 @@ class PedagangImport implements
             'latitude'        => $lat,
             'longitude'       => $lng,
             'alamat_usaha'    => trim($row['alamat_usaha'] ?? '') ?: null,
+            'keterangan'      => trim($row['keterangan'] ?? $row['catatan'] ?? '') ?: null,
             'pasar_id'        => $targetPasarId,
         ]);
     }

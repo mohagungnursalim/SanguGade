@@ -93,7 +93,7 @@
             <input
                 type="text"
                 wire:model.live.debounce.300ms="search"
-                placeholder="Cari berdasarkan nama, NIK, jenis sarana, jenis usaha..."
+                placeholder="Cari berdasarkan nama, NIK, nama tempat, jenis sarana, jenis usaha..."
                 class="w-full pl-9 pr-4 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white"
             >
         </div>
@@ -181,6 +181,7 @@
                         <th class="px-4 py-3">Nama Pedagang</th>
                         <th class="px-4 py-3">NIK</th>
                         <th class="px-4 py-3">Alamat Tinggal</th>
+                        <th class="px-4 py-3">Nama Tempat</th>
                         <th class="px-3 py-3">Jenis Sarana</th>
                         <th class="px-3 py-3 text-right">Ukuran</th>
                         <th class="px-3 py-3 text-right">Tarif / m²</th>
@@ -188,6 +189,7 @@
                         <th class="px-3 py-3">Jenis Usaha</th>
                         <th class="px-4 py-3">Titik Kordinat</th>
                         <th class="px-4 py-3">Lokasi Usaha</th>
+                        <th class="px-4 py-3">Keterangan</th>
                         <th class="px-3 py-3">Pasar</th>
                         <th class="px-3 py-3 text-center w-24">Aksi</th>
                     </tr>
@@ -212,6 +214,9 @@
                         </td>
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-300 min-w-[140px] max-w-xs truncate" title="{{ $item->alamat }}">
                             {{ $item->alamat ?? '-' }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200 whitespace-nowrap font-medium">
+                            {{ $item->nama_tempat ?? '-' }}
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
@@ -250,6 +255,9 @@
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-300 min-w-[140px] max-w-xs truncate" title="{{ $item->alamat_usaha }}">
                             {{ $item->alamat_usaha ?? '-' }}
                         </td>
+                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300 min-w-[140px] max-w-xs truncate" title="{{ $item->keterangan }}">
+                            {{ $item->keterangan ?? '-' }}
+                        </td>
                         <td class="px-3 py-3 whitespace-nowrap font-medium text-gray-700 dark:text-gray-300">
                             {{ $item->pasar?->nama_pasar ?? '-' }}
                         </td>
@@ -287,7 +295,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="14" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                        <td colspan="16" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                             <i class="fas fa-store-slash text-3xl mb-2 block"></i>
                             Belum ada data pedagang yang ditemukan.
                         </td>
@@ -424,6 +432,18 @@
                         @error('alamat') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
+                    {{-- Nama Tempat --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Tempat</label>
+                        <input
+                            type="text"
+                            wire:model="nama_tempat"
+                            placeholder="Contoh: Kios A, Los 5, Lapak 3"
+                            class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        @error('nama_tempat') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Jenis Sarana --}}
                         <div>
@@ -519,16 +539,29 @@
                         </div>
                     </div>
 
-                    {{-- Lokasi Usaha --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Lokasi Usaha (Kios/Lapak/Los)</label>
-                        <textarea
-                            wire:model="alamat_usaha"
-                            rows="2"
-                            placeholder="Contoh: Blok A No. 12, Pintu Timur Pasar..."
-                            class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
-                        ></textarea>
-                        @error('alamat_usaha') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                    {{-- Lokasi Usaha & Keterangan --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Lokasi Usaha (Kios/Lapak/Los)</label>
+                            <textarea
+                                wire:model="alamat_usaha"
+                                rows="2"
+                                placeholder="Contoh: Blok A No. 12, Pintu Timur Pasar..."
+                                class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                            ></textarea>
+                            @error('alamat_usaha') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Keterangan</label>
+                            <textarea
+                                wire:model="keterangan"
+                                rows="2"
+                                placeholder="Catatan atau keterangan tambahan..."
+                                class="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                            ></textarea>
+                            @error('keterangan') <p class="text-red-500 text-[11px] mt-1">{{ $message }}</p> @enderror
+                        </div>
                     </div>
 
                     {{-- Pasar Selection (Hanya Admin yang bisa ubah, Operator terkunci ke pasarnya) --}}
@@ -627,7 +660,7 @@
                             </button>
                         </div>
                         <p class="text-[11px] text-gray-600 dark:text-gray-400">
-                            Nama, NIK, Alamat Tinggal, Jenis Sarana, Ukuran, Tarif per meter (m2), Total tarif bulanan (Rp), Jenis Usaha, Titik Kordinat (lat, lng), Alamat Usaha, Pasar
+                            Nama, NIK, Alamat Tinggal, Nama Tempat, Jenis Sarana, Ukuran, Tarif per meter (m2), Total tarif bulanan (Rp), Jenis Usaha, Titik Kordinat (lat, lng), Alamat Usaha, Keterangan, Pasar
                         </p>
                         <p class="text-[10px] text-blue-600 dark:text-blue-400 mt-1 font-medium">
                             <i class="fas fa-bolt mr-1"></i> File akan diproses di background Queue (aman untuk ribuan data sekaligus).
@@ -820,6 +853,7 @@ function pedagangManager() {
             this.$wire.set('nama', item.nama || '');
             this.$wire.set('nik', item.nik || '');
             this.$wire.set('alamat', item.alamat || '');
+            this.$wire.set('nama_tempat', item.nama_tempat || '');
             this.$wire.set('jenis_sarana', item.jenis_sarana || '');
             this.$wire.set('ukuran', item.ukuran || '');
             this.$wire.set('tarif_per_meter', item.tarif_per_meter || '');
@@ -828,6 +862,7 @@ function pedagangManager() {
             this.$wire.set('latitude', item.latitude || '');
             this.$wire.set('longitude', item.longitude || '');
             this.$wire.set('alamat_usaha', item.alamat_usaha || '');
+            this.$wire.set('keterangan', item.keterangan || '');
             this.$wire.set('pasar_id', item.pasar_id || '');
 
             this.modalOpen = true;

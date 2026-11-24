@@ -36,6 +36,8 @@ class DataPedagang extends Component
     public $latitude = '';
     public $longitude = '';
     public string $alamat_usaha = '';
+    public string $nama_tempat = '';
+    public string $keterangan = '';
     public ?int $pasar_id = null;
 
     // Delete target
@@ -54,6 +56,7 @@ class DataPedagang extends Component
             'nama' => 'required|string|max:255',
             'nik' => 'nullable|string|max:20',
             'alamat' => 'nullable|string|max:1000',
+            'nama_tempat' => 'nullable|string|max:255',
             'jenis_sarana' => 'required|string|max:100',
             'ukuran' => 'nullable|numeric|min:0',
             'tarif_per_meter' => 'nullable|numeric|min:0',
@@ -62,6 +65,7 @@ class DataPedagang extends Component
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'alamat_usaha' => 'nullable|string|max:1000',
+            'keterangan' => 'nullable|string|max:2000',
             'pasar_id' => 'required|exists:pasars,id',
         ];
     }
@@ -132,7 +136,7 @@ class DataPedagang extends Component
         $this->selectAll = false;
     }
 
-    private function getCurrentPageIds(): array
+    private function getFilteredPedagangs(): \Illuminate\Support\Collection
     {
         $user = auth()->user();
         $targetPasarId = (!$user->hasRole('admin') && $user->pasar_id)
@@ -141,19 +145,27 @@ class DataPedagang extends Component
 
         $allPedagangs = PedagangCacheHelper::getAll($targetPasarId);
 
-        if ($this->search) {
-            $s = strtolower($this->search);
-            $filtered = $allPedagangs->filter(function ($item) use ($s) {
-                return str_contains(strtolower($item->nama), $s)
-                    || str_contains(strtolower($item->nik ?? ''), $s)
-                    || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
-                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s)
-                    || str_contains(strtolower($item->alamat_usaha ?? ''), $s)
-                    || str_contains(strtolower($item->alamat ?? ''), $s);
-            });
-        } else {
-            $filtered = $allPedagangs;
+        if (!$this->search) {
+            return $allPedagangs;
         }
+
+        $s = strtolower($this->search);
+
+        return $allPedagangs->filter(function ($item) use ($s) {
+            return str_contains(strtolower($item->nama), $s)
+                || str_contains(strtolower($item->nik ?? ''), $s)
+                || str_contains(strtolower($item->nama_tempat ?? ''), $s)
+                || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
+                || str_contains(strtolower($item->jenis_sarana ?? ''), $s)
+                || str_contains(strtolower($item->alamat_usaha ?? ''), $s)
+                || str_contains(strtolower($item->alamat ?? ''), $s)
+                || str_contains(strtolower($item->keterangan ?? ''), $s);
+        });
+    }
+
+    private function getCurrentPageIds(): array
+    {
+        $filtered = $this->getFilteredPedagangs();
 
         if ($this->perPage === 'all') {
             return $filtered->pluck('id')->all();
@@ -225,6 +237,7 @@ class DataPedagang extends Component
             'nama' => $this->nama,
             'nik' => $this->nik ?: null,
             'alamat' => $this->alamat ?: null,
+            'nama_tempat' => $this->nama_tempat ?: null,
             'jenis_sarana' => $this->jenis_sarana,
             'ukuran' => $this->ukuran !== '' ? (float)$this->ukuran : 0,
             'tarif_per_meter' => $this->tarif_per_meter !== '' ? (float)$this->tarif_per_meter : 0,
@@ -233,6 +246,7 @@ class DataPedagang extends Component
             'latitude' => $this->latitude !== '' ? (float)$this->latitude : null,
             'longitude' => $this->longitude !== '' ? (float)$this->longitude : null,
             'alamat_usaha' => $this->alamat_usaha ?: null,
+            'keterangan' => $this->keterangan ?: null,
             'pasar_id' => $this->pasar_id,
         ];
 
@@ -327,6 +341,7 @@ class DataPedagang extends Component
             'nama',
             'nik',
             'alamat',
+            'nama_tempat',
             'jenis_sarana',
             'ukuran',
             'tarif_per_meter',
@@ -335,6 +350,7 @@ class DataPedagang extends Component
             'latitude',
             'longitude',
             'alamat_usaha',
+            'keterangan',
         ]);
 
         $user = auth()->user();
@@ -349,27 +365,7 @@ class DataPedagang extends Component
 
     public function render()
     {
-        $user = auth()->user();
-        $targetPasarId = (!$user->hasRole('admin') && $user->pasar_id)
-            ? $user->pasar_id
-            : $this->selectedPasarId;
-
-        $allPedagangs = PedagangCacheHelper::getAll($targetPasarId);
-
-        if ($this->search) {
-            $s = strtolower($this->search);
-            $filtered = $allPedagangs->filter(function ($item) use ($s) {
-                return str_contains(strtolower($item->nama), $s)
-                    || str_contains(strtolower($item->nik ?? ''), $s)
-                    || str_contains(strtolower($item->jenis_usaha ?? ''), $s)
-                    || str_contains(strtolower($item->jenis_sarana ?? ''), $s)
-                    || str_contains(strtolower($item->alamat_usaha ?? ''), $s)
-                    || str_contains(strtolower($item->alamat ?? ''), $s);
-            });
-        } else {
-            $filtered = $allPedagangs;
-        }
-
+        $filtered = $this->getFilteredPedagangs();
         $totalFiltered = $filtered->count();
 
         if ($this->perPage === 'all') {
