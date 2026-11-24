@@ -69,7 +69,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="block mt-4">
             <label for="remember" class="inline-flex items-center">
                 <input wire:model.boolean="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+                <span class="ms-2 text-sm text-gray-600">{{ __('Ingat Akun') }}</span>
             </label>
         </div>
 
@@ -82,7 +82,7 @@ new #[Layout('layouts.guest')] class extends Component
 
             <x-primary-button class="ms-3" wire:target="login" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="login">
-                    {{ __('Log in') }}
+                    {{ __('Masuk') }}
                 </span>
                 <span wire:loading wire:target="login" class="inline-flex items-center gap-1.5">
                     <i class="fas fa-spinner fa-spin text-xs"></i>
