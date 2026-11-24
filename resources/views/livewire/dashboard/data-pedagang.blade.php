@@ -652,7 +652,7 @@
                                 wire:click="downloadTemplateExcel"
                                 wire:target="downloadTemplateExcel"
                                 wire:loading.attr="disabled"
-                                class="text-blue-600 hover:underline font-bold disabled:opacity-50"
+                                class="text-green-600 hover:underline font-bold disabled:opacity-50"
                             >
                                 <i class="fas fa-file-excel mr-1" wire:loading.remove wire:target="downloadTemplateExcel"></i>
                                 <i class="fas fa-spinner fa-spin mr-1" wire:loading wire:target="downloadTemplateExcel"></i>
