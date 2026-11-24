@@ -37,7 +37,9 @@ class UserIndex extends Component
             'email' => 'required|email|unique:users,email,' . $this->userId,
             'password' => $this->userId ? 'nullable|min:6' : 'required|min:6',
             'role' => 'required|in:' . implode(',', self::$allowedRoles),
-            'pasar_id' => 'required|exists:pasars,id',
+            'pasar_id' => $this->role === 'opd'
+                ? 'nullable|exists:pasars,id'
+                : 'required|exists:pasars,id',
         ];
     }
 

@@ -243,7 +243,7 @@
                         Peran / Role <span class="text-red-500">*</span>
                     </label>
                     <select
-                        wire:model.defer="role"
+                        wire:model.live="role"
                         class="w-full rounded-lg border px-3 py-2 text-xs bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
                     >
                         <option value="">-- Pilih Role --</option>
@@ -259,7 +259,12 @@
                 {{-- Mounting Pasar --}}
                 <div>
                     <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        Penempatan Pasar (Mounting) <span class="text-red-500">*</span>
+                        Penempatan Pasar (Mounting)
+                        @if ($role === 'opd')
+                            <span class="text-gray-400 font-normal">(opsional)</span>
+                        @else
+                            <span class="text-red-500">*</span>
+                        @endif
                     </label>
                     <select
                         wire:model.defer="pasar_id"
