@@ -115,7 +115,7 @@
             </div>
 
             {{-- Filter Lokasi Pasar (Hanya Admin) --}}
-            @if(auth()->user()->hasRole('admin'))
+            @if(auth()->user()->hasRole('admin|opd'))
             <div class="w-full sm:w-56">
                 <select
                     wire:model.live="selectedPasarId"
