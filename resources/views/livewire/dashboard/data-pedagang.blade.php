@@ -190,7 +190,9 @@
                         <th class="px-4 py-3">Titik Kordinat</th>
                         <th class="px-4 py-3">Lokasi Usaha</th>
                         <th class="px-4 py-3">Keterangan</th>
+                        @role(['admin','opd'])
                         <th class="px-3 py-3">Pasar</th>
+                        @endrole
                         <th class="px-3 py-3 text-center w-24">Aksi</th>
                     </tr>
                 </thead>
@@ -258,9 +260,13 @@
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-300 min-w-[140px] max-w-xs truncate" title="{{ $item->keterangan }}">
                             {{ $item->keterangan ?? '-' }}
                         </td>
+                        @role(['admin', 'opd'])
                         <td class="px-3 py-3 whitespace-nowrap font-medium text-gray-700 dark:text-gray-300">
                             {{ $item->pasar?->nama_pasar ?? '-' }}
                         </td>
+                        @endrole
+
+                        
                         <td class="px-3 py-3 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 {{-- Tombol Edit via Alpine (Zero roundtrip) --}}
