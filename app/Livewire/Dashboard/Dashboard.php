@@ -135,12 +135,16 @@ class Dashboard extends Component
         // 4. Kondisi Fisik Sarana & Bangunan Pasar (Pie Chart)
         $kondisiSaranaData = PasarsCacheHelper::getKondisiSaranaStats($activePasarId);
 
+        // 5. Status Pedagang: Aktif vs Keluar (Soft-deleted <= 30 hari)
+        $statusPedagangData = PedagangCacheHelper::getStatusPedagangStats($activePasarId);
+
         return [
             'pendapatan'     => $this->getChartData(),
             'rankingPasar'   => ['labels' => $rankingLabels, 'data' => $rankingData],
             'jenisUsaha'     => $jenisUsahaData,
             'jenisSarana'    => $jenisSaranaData,
             'kondisiSarana'  => $kondisiSaranaData,
+            'statusPedagang' => $statusPedagangData,
         ];
     }
 

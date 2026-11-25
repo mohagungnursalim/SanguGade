@@ -130,9 +130,49 @@ class DataPedagangTest extends TestCase
             ->call('delete')
             ->assertDispatched('pedagang-deleted');
 
-        $this->assertDatabaseMissing('pedagangs', [
+        $this->assertSoftDeleted('pedagangs', [
             'id' => $pedagang->id,
         ]);
+    }
+
+    public function test_pedagang_status_stats_and_30_day_pruning(): void
+    {
+        $aktif = Pedagang::create([
+            'nama' => 'Pedagang Aktif',
+            'jenis_sarana' => 'Kios',
+            'jenis_usaha' => 'Sembako',
+            'pasar_id' => $this->pasar->id,
+        ]);
+
+        $keluarBaru = Pedagang::create([
+            'nama' => 'Pedagang Keluar Baru',
+            'jenis_sarana' => 'Los',
+            'jenis_usaha' => 'Sayur',
+            'pasar_id' => $this->pasar->id,
+        ]);
+        $keluarBaru->delete();
+
+        $keluarLama = Pedagang::create([
+            'nama' => 'Pedagang Keluar Lama',
+            'jenis_sarana' => 'Lapak',
+            'jenis_usaha' => 'Ikan',
+            'pasar_id' => $this->pasar->id,
+        ]);
+        $keluarLama->forceFill(['deleted_at' => now()->subDays(31)])->saveQuietly();
+
+        \App\Helpers\PedagangCacheHelper::refreshAll();
+        $stats = \App\Helpers\PedagangCacheHelper::getStatusPedagangStats($this->pasar->id);
+
+        $this->assertSame([$this->pasar->nama_pasar], $stats['labels']);
+        $this->assertSame([1], $stats['aktif']);
+        $this->assertSame([2], $stats['keluar']);
+
+        // Jalankan prune -> yang >= 30 hari terhapus permanen
+        $this->artisan('model:prune', ['--model' => [Pedagang::class]])->assertExitCode(0);
+
+        $this->assertDatabaseHas('pedagangs', ['id' => $aktif->id]);
+        $this->assertSoftDeleted('pedagangs', ['id' => $keluarBaru->id]);
+        $this->assertDatabaseMissing('pedagangs', ['id' => $keluarLama->id]);
     }
 
     public function test_can_import_excel(): void
