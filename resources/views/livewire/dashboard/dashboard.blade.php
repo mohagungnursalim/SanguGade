@@ -72,7 +72,7 @@
         {{-- Total Pedagang --}}
         <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden group">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Jumlah Pedagang</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Jumlah Pedagang berdasarkan SarPras</span>
                 <span class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-users"></i>
                 </span>
