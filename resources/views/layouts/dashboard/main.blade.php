@@ -32,7 +32,24 @@
         })();
     </script>
 
-    <title>Dashboard</title>
+    @php
+        $pageTitle = match (true) {
+            request()->routeIs('dashboard') => 'Dashboard',
+            request()->routeIs('dashboard.sarana-prasarana') => 'Sarana Prasarana',
+            request()->routeIs('dashboard.pendapatan-pasar') => 'Pendapatan Pasar',
+            request()->routeIs('dashboard.data-pedagang') => 'Data Pedagang',
+            request()->routeIs('dashboard.roles.*') => 'Peran',
+            request()->routeIs('dashboard.users.index') => 'Akun Login',
+            request()->routeIs('dashboard.profile') => 'Profil',
+            request()->routeIs('dashboard.posts.create') => 'Tambah Berita',
+            request()->routeIs('dashboard.posts.edit') => 'Edit Berita',
+            request()->routeIs('dashboard.posts.index') => 'Manajemen Berita',
+            request()->routeIs('dashboard.categories') => 'Manajemen Kategori',
+            request()->routeIs('dashboard.tags') => 'Manajemen Tag',
+            default => 'Sangu Gade',
+        };
+    @endphp
+    <title>{{ $pageTitle }} | Sangu Gade</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('styles')
