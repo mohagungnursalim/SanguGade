@@ -7,6 +7,7 @@ use App\Helpers\PendapatanCacheHelper;
 use App\Livewire\Dashboard\Dashboard;
 use App\Models\Pasar;
 use App\Models\PendapatanPasar;
+use App\Models\Pedagang;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -192,6 +193,42 @@ class DashboardCacheAndChartTest extends TestCase
         $response->assertSee('Diperbarui');
     }
 
+    public function test_dashboard_total_pedagang_counts_pedagang_model_records(): void
+    {
+        Pedagang::create([
+            'nama' => 'Pedagang A1',
+            'jenis_usaha' => 'Sayur',
+            'jenis_sarana' => 'Kios',
+            'pasar_id' => $this->pasarA->id,
+        ]);
+        Pedagang::create([
+            'nama' => 'Pedagang A2',
+            'jenis_usaha' => 'Buah',
+            'jenis_sarana' => 'Los',
+            'pasar_id' => $this->pasarA->id,
+        ]);
+        Pedagang::create([
+            'nama' => 'Pedagang B1',
+            'jenis_usaha' => 'Daging',
+            'jenis_sarana' => 'Lapak',
+            'pasar_id' => $this->pasarB->id,
+        ]);
+
+        $deletedPedagang = Pedagang::create([
+            'nama' => 'Pedagang Terhapus',
+            'jenis_usaha' => 'Pakaian',
+            'jenis_sarana' => 'Kios',
+            'pasar_id' => $this->pasarA->id,
+        ]);
+        $deletedPedagang->delete();
+
+        $component = Livewire::actingAs($this->adminUser)->test(Dashboard::class);
+        $component->assertSee('3 Orang')
+            ->assertDontSee('280 Orang')
+            ->set('pasarId', (string) $this->pasarA->id)
+            ->assertSee('2 Orang');
+    }
+
     public function test_dashboard_livewire_component_updates_timeframe(): void
     {
         Livewire::actingAs($this->adminUser)
@@ -207,4 +244,3 @@ class DashboardCacheAndChartTest extends TestCase
             ->assertDispatched('chart-data-updated');
     }
 }
-

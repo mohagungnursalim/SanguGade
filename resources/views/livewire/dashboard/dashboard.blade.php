@@ -72,17 +72,17 @@
         {{-- Total Pedagang --}}
         <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden group">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Jumlah Pedagang berdasarkan SarPras</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Total Pedagang</span>
                 <span class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-users"></i>
                 </span>
             </div>
             <p class="text-2xl font-black text-gray-900 dark:text-white">
-                {{ number_format($pasarTotals->total_pedagang ?? 0) }} Orang
+                {{ number_format($totalPedagang) }} Orang
             </p>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                 <i class="fa-solid fa-door-open text-purple-500"></i>
-                <span>{{ number_format(($pasarTotals->total_kios ?? 0) + ($pasarTotals->total_los ?? 0)) }} total Kios & Los</span>
+                <span>{{ number_format(($pasarTotals->total_kios ?? 0) + ($pasarTotals->total_los ?? 0) + ($pasarTotals->total_lapak ?? 0) + ($pasarTotals->total_ruko ?? 0)) }} total Kios, Los, Lapak & Ruko</span>
             </p>
         </div>
 

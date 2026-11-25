@@ -5,6 +5,7 @@ namespace App\Livewire\Dashboard;
 use App\Helpers\PasarsCacheHelper;
 use App\Helpers\PedagangCacheHelper;
 use App\Helpers\PendapatanCacheHelper;
+use App\Models\Pedagang;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -171,6 +172,9 @@ class Dashboard extends Component
         // 2. Data Pasar & Sarana Prasarana Sesuai Filter Pasar Aktif
         $activePasarId = !empty($this->pasarId) ? (int)$this->pasarId : null;
         $pasarTotals = PasarsCacheHelper::getGlobalTotals($activePasarId);
+        $totalPedagang = Pedagang::query()
+            ->when($activePasarId, fn ($query) => $query->where('pasar_id', $activePasarId))
+            ->count();
 
         if ($activePasarId) {
             $totalPasar = 1;
@@ -211,6 +215,7 @@ class Dashboard extends Component
             'totalPasar'        => $totalPasar,
             'namaFilterPasar'   => $namaFilterPasar,
             'pasarTotals'       => $pasarTotals,
+            'totalPedagang'     => $totalPedagang,
             'totalPendapatan'   => $totalPendapatan,
             'totalTransaksi'    => $totalTransaksi,
             'ringkasanPerPasar' => $ringkasanPerPasar,
