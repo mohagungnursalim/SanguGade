@@ -355,6 +355,28 @@
                 <canvas id="kondisiSaranaPieChart"></canvas>
             </div>
         </div>
+
+        {{-- 5. Doughnut Chart: Status Pedagang (Aktif vs Keluar 30 Hari) --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-between lg:col-span-2">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                        <i class="fa-solid fa-user-check"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                            Status Pedagang (Aktif vs Keluar)
+                        </h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Perbandingan pedagang aktif di pasar dengan pedagang keluar (retensi 30 hari sebelum terhapus permanen)
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative w-full h-72" wire:ignore>
+                <canvas id="statusPedagangPieChart"></canvas>
+            </div>
+        </div>
     </div>
 
     {{-- =====================================================================
@@ -662,6 +684,7 @@ function extraChartsManager() {
         jenisUsahaChartInstance: null,
         jenisSaranaChartInstance: null,
         kondisiSaranaChartInstance: null,
+        statusPedagangChartInstance: null,
 
         initCharts(initialData) {
             if (initialData) {
@@ -881,6 +904,84 @@ function extraChartsManager() {
                     }
                 });
             }
+
+            // 5. Status Pedagang Grouped Bar Chart (Aktif vs Keluar per Pasar)
+            this.renderStatusPedagangChart(this.chartsData?.statusPedagang);
+        },
+
+        renderStatusPedagangChart(dataObj) {
+            const statusCtx = document.getElementById('statusPedagangPieChart');
+            if (!statusCtx) return;
+
+            const existing = Chart.getChart(statusCtx);
+            if (existing) existing.destroy();
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+
+            const sLabels = (dataObj?.labels?.length) ? dataObj.labels : ['-'];
+            const sAktif = (dataObj?.aktif?.length) ? dataObj.aktif : [0];
+            const sKeluar = (dataObj?.keluar?.length) ? dataObj.keluar : [0];
+
+            this.statusPedagangChartInstance = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: sLabels,
+                    datasets: [
+                        {
+                            label: 'Pedagang Aktif',
+                            data: sAktif,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Pedagang Keluar',
+                            data: sKeluar,
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 12 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#111827',
+                            titleColor: '#ffffff',
+                            padding: 10,
+                            boxPadding: 4,
+                            callbacks: {
+                                label: (context) => ` ${context.dataset.label}: ${Number(context.raw || 0).toLocaleString('id-ID')} Pedagang`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { size: 11 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                color: textColor,
+                                font: { size: 10 },
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
         },
 
         updateCharts(newCharts) {
@@ -996,6 +1097,11 @@ function extraChartsManager() {
                 this.kondisiSaranaChartInstance.data.labels = labels;
                 this.kondisiSaranaChartInstance.data.datasets[0].data = data;
                 this.kondisiSaranaChartInstance.update();
+            }
+
+            // Update Status Pedagang Grouped Bar
+            if (newCharts.statusPedagang) {
+                this.renderStatusPedagangChart(newCharts.statusPedagang);
             }
         }
     };

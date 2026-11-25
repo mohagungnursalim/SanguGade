@@ -126,6 +126,59 @@ class PedagangCacheHelper
         });
     }
 
+    /**
+     * Ambil statistik pedagang aktif vs keluar per pasar (soft-deleted dalam 30 hari terakhir)
+     *
+     * @return array{labels: array<string>, aktif: array<int>, keluar: array<int>}
+     */
+    public static function getStatusPedagangStats(?int $pasarId = null): array
+    {
+        $suffix = 'status_pedagang_bar_' . ($pasarId ?? 'all');
+        $key = self::vKey($suffix);
+
+        return Cache::remember($key, self::$ttl, function () use ($pasarId) {
+            $pasars = PasarsCacheHelper::getAllPasar()
+                ->when($pasarId !== null, fn ($c) => $c->where('id', $pasarId))
+                ->values();
+
+            $counts = \Illuminate\Support\Facades\DB::table('pedagangs')
+                ->when($pasarId !== null, fn ($q) => $q->where('pasar_id', $pasarId))
+                ->selectRaw('
+                    pasar_id,
+                    SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS aktif_count,
+                    SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS keluar_count
+                ')
+                ->groupBy('pasar_id')
+                ->get()
+                ->keyBy('pasar_id');
+
+            $labels = [];
+            $aktif = [];
+            $keluar = [];
+
+            foreach ($pasars as $pasar) {
+                $row = $counts->get($pasar->id);
+                $labels[] = $pasar->nama_pasar;
+                $aktif[] = $row ? (int) $row->aktif_count : 0;
+                $keluar[] = $row ? (int) $row->keluar_count : 0;
+            }
+
+            if (empty($labels)) {
+                return [
+                    'labels' => ['Belum Ada Data'],
+                    'aktif' => [0],
+                    'keluar' => [0],
+                ];
+            }
+
+            return [
+                'labels' => $labels,
+                'aktif' => $aktif,
+                'keluar' => $keluar,
+            ];
+        });
+    }
+
     public static function refreshAll(): void
     {
         self::invalidate();
